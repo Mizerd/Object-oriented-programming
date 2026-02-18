@@ -196,22 +196,44 @@ int main() {
             int genM = readIntInRange("Kiek studentų sugeneruoti? (1..200): ", 1, 200);
             int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, MAX_ND);
 
-            static const std::string names[] = {
-                "Arvydas","Rimas","Ieva","Mantas","Gabija","Lukas","Egle","Tomas","Monika","Paulius"
+            // Atskiri duomenų rinkiniai vyrų ir moterų vardams/pavardėms
+            static const std::string maleNames[] = {
+                "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"
             };
-            static const std::string surnames[] = {
-                "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Jankauskaite","Vaitkus","Stankevicius","Brazdeikis"
+            static const std::string femaleNames[] = {
+                "Ieva","Gabija","Egle","Monika","Austeja","Greta","Juste","Ugne"
             };
-            const int namesN = static_cast<int>(sizeof(names) / sizeof(names[0]));
-            const int surN = static_cast<int>(sizeof(surnames) / sizeof(surnames[0]));
 
-            std::uniform_int_distribution<int> dn(0, namesN - 1);
-            std::uniform_int_distribution<int> ds(0, surN - 1);
+            // Lietuviškos pavardės dažnai turi skirtingas formas (pvz., -as/-is vs -aitė/-ytė/-ienė).
+            // Čia pateikiami atskiri sąrašai sugeneravimui.
+            static const std::string maleSurnames[] = {
+                "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Vaitkus","Stankevicius","Brazdeikis","Jankauskas"
+            };
+            static const std::string femaleSurnames[] = {
+                "Sabonyte","Kurtinaityte","Petrauskaite","Kazlauskaite","Vaitkute","Stankeviciute","Brazdeikyte","Jankauskaite"
+            };
+
+            const int maleNamesN = static_cast<int>(sizeof(maleNames) / sizeof(maleNames[0]));
+            const int femaleNamesN = static_cast<int>(sizeof(femaleNames) / sizeof(femaleNames[0]));
+            const int maleSurN = static_cast<int>(sizeof(maleSurnames) / sizeof(maleSurnames[0]));
+            const int femaleSurN = static_cast<int>(sizeof(femaleSurnames) / sizeof(femaleSurnames[0]));
+
+            std::uniform_int_distribution<int> dMaleName(0, maleNamesN - 1);
+            std::uniform_int_distribution<int> dFemaleName(0, femaleNamesN - 1);
+            std::uniform_int_distribution<int> dMaleSur(0, maleSurN - 1);
+            std::uniform_int_distribution<int> dFemaleSur(0, femaleSurN - 1);
+            std::bernoulli_distribution pickFemale(0.5);
 
             for (int i = 0; i < genM && m < MAX_STUDENTS; ++i) {
                 StudentA s;
-                s.vardas = names[dn(rng)];
-                s.pavarde = surnames[ds(rng)];
+                const bool isFemale = pickFemale(rng);
+                if (isFemale) {
+                    s.vardas = femaleNames[dFemaleName(rng)];
+                    s.pavarde = femaleSurnames[dFemaleSur(rng)];
+                } else {
+                    s.vardas = maleNames[dMaleName(rng)];
+                    s.pavarde = maleSurnames[dMaleSur(rng)];
+                }
 
                 s.ndCount = k;
                 for (int j = 0; j < k; ++j) s.nd[j] = rndGrade(rng);
