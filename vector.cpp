@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <chrono>
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <random>
@@ -11,7 +12,7 @@
 constexpr double kNdWeight = 0.4;
 constexpr double kEgzWeight = 0.6;
 
-// v0.1.2 - saugome tik galutinius rezultatus (kaip v0.2)
+// v0.1.3 - pridedamas failo nuskaitymas (v0.2 pradžia)
 struct StudentRec {
     std::string vardas;
     std::string pavarde;
@@ -19,8 +20,8 @@ struct StudentRec {
     double galMed = 0.0;
 };
 
-static std::string trimWs(std::string s) {
-    auto isTrim = [](unsigned char c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n'; };
+static std::string trimAscii(std::string s) {
+    auto isTrim = [](unsigned char c) { return c == ' ' || c == '\t' || c == '\r'; };
     size_t start = 0;
     while (start < s.size() && isTrim(static_cast<unsigned char>(s[start]))) ++start;
     size_t end = s.size();
@@ -35,9 +36,13 @@ static std::string readLinePrompted(const std::string& prompt) {
     return line;
 }
 
+static std::string readLineTrimmedPrompted(const std::string& prompt) {
+    return trimAscii(readLinePrompted(prompt));
+}
+
 int readIntInRange(const std::string& prompt, int minVal, int maxVal) {
     while (true) {
-        const std::string line = trimWs(readLinePrompted(prompt));
+        const std::string line = readLineTrimmedPrompted(prompt);
         if (line.empty()) {
             std::cout << "Klaida: įveskite skaičių.\n";
             continue;
@@ -61,8 +66,8 @@ int readIntInRange(const std::string& prompt, int minVal, int maxVal) {
 
 static bool readNameSurname(std::string& v, std::string& p) {
     while (true) {
-        const std::string line = trimWs(readLinePrompted(
-            "\nĮveskite: vardas pavardė (arba 0, kad baigti): "));
+        const std::string line = readLineTrimmedPrompted(
+            "\nĮveskite: vardas pavardė (arba 0, kad baigti): ");
         if (line == "0") return false;
         if (line.empty()) continue;
 
@@ -70,88 +75,51 @@ static bool readNameSurname(std::string& v, std::string& p) {
         if (!(iss >> v)) continue;
         if (v == "0") return false;
         if (!(iss >> p)) {
-            std::cout << "Klaida: įveskite ir pavardę (formatas: vardas pavardė).\n";
+            std::cout << "Klaida: įveskite ir pavardę.\n";
             continue;
         }
         return true;
     }
 }
 
-double averageVec(const std::vector<int>& v) {
+static double calcFinal(double ndValue, int egz) {
+    return kNdWeight * ndValue + kEgzWeight * static_cast<double>(egz);
+}
+
+static double medianFromSorted(const std::vector<int>& sorted) {
+    if (sorted.empty()) return 0.0;
+    const size_t n = sorted.size();
+    if (n % 2 == 1) return static_cast<double>(sorted[n / 2]);
+    return (static_cast<double>(sorted[n / 2 - 1]) + static_cast<double>(sorted[n / 2])) / 2.0;
+}
+
+static double averageVec(const std::vector<int>& v) {
     if (v.empty()) return 0.0;
     long long sum = 0;
     for (int x : v) sum += x;
     return static_cast<double>(sum) / static_cast<double>(v.size());
 }
 
-double medianVec(std::vector<int> v) {
+static double medianVec(std::vector<int> v) {
     if (v.empty()) return 0.0;
     std::sort(v.begin(), v.end());
-    const size_t n = v.size();
-    if (n % 2 == 1) return static_cast<double>(v[n / 2]);
-    return (static_cast<double>(v[n / 2 - 1]) + static_cast<double>(v[n / 2])) / 2.0;
+    return medianFromSorted(v);
 }
 
-double calcFinal(double ndValue, int egz) {
-    return kNdWeight * ndValue + kEgzWeight * static_cast<double>(egz);
-}
-
-static StudentRec makeRec(std::string v, std::string p, const std::vector<int>& nd, int egz) {
-    StudentRec s;
-    s.vardas = std::move(v);
-    s.pavarde = std::move(p);
-    s.galVid = calcFinal(averageVec(nd), egz);
-    s.galMed = calcFinal(medianVec(nd), egz);
-    return s;
-}
-
-int rndGrade(std::mt19937& rng) {
+static int rndGrade(std::mt19937& rng) {
     std::uniform_int_distribution<int> dist(1, 10);
     return dist(rng);
 }
 
-void printMenu() {
-    std::cout
-        << "\nMeniu:\n"
-        << "1 - Įvesti ranka (vardas pavardė, tada ND ir egz)\n"
-        << "2 - Generuoti pažymius (vardą/pavardę įvedate)\n"
-        << "3 - Generuoti vardus, pavardes ir pažymius\n"
-        << "4 - Baigti darbą\n"
-        << std::flush;
-}
-
-void printTable(const std::vector<StudentRec>& students) {
-    std::cout << "\n";
-    std::cout << std::left << std::setw(15) << "Vardas"
-              << std::left << std::setw(15) << "Pavardė"
-              << std::left << std::setw(18) << "Galutinis (Vid.)"
-              << std::left << std::setw(18) << "Galutinis (Med.)"
-              << "\n";
-    std::cout << std::string(66, '-') << "\n";
-
-    std::cout << std::fixed << std::setprecision(2);
-    for (const auto& s : students) {
-        std::cout << std::left << std::setw(15) << s.vardas
-                  << std::left << std::setw(15) << s.pavarde
-                  << std::left << std::setw(18) << s.galVid
-                  << std::left << std::setw(18) << s.galMed
-                  << "\n";
-    }
-}
-
 static void readHomeworkInteractive(std::vector<int>& nd) {
     nd.clear();
-    std::cout << "Namų darbų įvedimas: įveskite pažymius (1..10).\n";
-    std::cout << "Įvedus 0 - namų darbų įvedimas BAIGIAMAS.\n";
+    std::cout << "Namų darbų įvedimas: įveskite pažymius (1..10).\n"
+              << "Įvedus 0 - namų darbų įvedimas BAIGIAMAS.\n";
 
     while (true) {
-        int g = readIntInRange("ND: ", 0, 10);
+        const int g = readIntInRange("ND: ", 0, 10);
         if (g == 0) break;
         nd.push_back(g);
-        if (nd.size() >= 50) {
-            std::cout << "Pasiektas ND limitas (50).\n";
-            break;
-        }
     }
 
     if (nd.empty()) {
@@ -159,101 +127,233 @@ static void readHomeworkInteractive(std::vector<int>& nd) {
     }
 }
 
+static void printHeader(std::ostream& out, size_t wV, size_t wP) {
+    const size_t wG = 18;
+    out << std::left << std::setw(static_cast<int>(wV)) << "Vardas"
+        << std::left << std::setw(static_cast<int>(wP)) << "Pavardė"
+        << std::left << std::setw(static_cast<int>(wG)) << "Galutinis (Vid.)"
+        << std::left << std::setw(static_cast<int>(wG)) << "Galutinis (Med.)"
+        << '\n';
+    out << std::string(wV + wP + wG + wG, '-') << '\n';
+}
+
+static void printTable(std::ostream& out,
+                       const std::vector<StudentRec>& students,
+                       size_t maxVLen,
+                       size_t maxPLen) {
+    const size_t wV = std::max<size_t>(maxVLen, std::string("Vardas").size()) + 2;
+    const size_t wP = std::max<size_t>(maxPLen, std::string("Pavardė").size()) + 2;
+    const size_t wG = 18;
+
+    printHeader(out, wV, wP);
+    out << std::fixed << std::setprecision(2);
+
+    for (const auto& s : students) {
+        out << std::left << std::setw(static_cast<int>(wV)) << s.vardas
+            << std::left << std::setw(static_cast<int>(wP)) << s.pavarde
+            << std::left << std::setw(static_cast<int>(wG)) << s.galVid
+            << std::left << std::setw(static_cast<int>(wG)) << s.galMed
+            << '\n';
+    }
+}
+
+static size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
+    std::istringstream iss(headerLine);
+    std::vector<std::string> tokens;
+    for (std::string t; iss >> t;) tokens.push_back(std::move(t));
+    if (tokens.size() < 4) {
+        throw std::runtime_error("Neteisinga antraštė (Vardas Pavarde ND.. Egz).");
+    }
+    return tokens.size() - 3;
+}
+
+static void readStudentsFromFileVec(const std::string& filename,
+                                    std::vector<StudentRec>& out,
+                                    size_t& maxVLen,
+                                    size_t& maxPLen) {
+    std::ifstream in(filename);
+    if (!in) throw std::runtime_error("Nepavyko atidaryti failo: " + filename);
+
+    std::string headerLine;
+    if (!std::getline(in, headerLine)) {
+        throw std::runtime_error("Failas tuščias arba nepavyko nuskaityti antraštės: " + filename);
+    }
+
+    const size_t ndCount = detectNdCountFromHeaderLine(headerLine);
+    std::vector<int> nd(ndCount);
+    std::vector<int> tmp(ndCount);
+
+    std::string v, p;
+    while (in >> v >> p) {
+        long long sum = 0;
+        for (size_t i = 0; i < ndCount; ++i) {
+            if (!(in >> nd[i])) throw std::runtime_error("Trūksta ND reikšmių (failo formatas).");
+            sum += nd[i];
+        }
+
+        int egz = 0;
+        if (!(in >> egz)) throw std::runtime_error("Trūksta egzamino pažymio (failo formatas).");
+
+        const double avg = ndCount ? (static_cast<double>(sum) / static_cast<double>(ndCount)) : 0.0;
+        tmp = nd;
+        std::sort(tmp.begin(), tmp.end());
+        const double med = medianFromSorted(tmp);
+
+        StudentRec s;
+        s.vardas = std::move(v);
+        s.pavarde = std::move(p);
+        s.galVid = calcFinal(avg, egz);
+        s.galMed = calcFinal(med, egz);
+
+        maxVLen = std::max(maxVLen, s.vardas.size());
+        maxPLen = std::max(maxPLen, s.pavarde.size());
+        out.push_back(std::move(s));
+    }
+
+    if (out.empty()) throw std::runtime_error("Faile nerasta studentų įrašų: " + filename);
+}
+
+static void menuV01Style(std::vector<StudentRec>& students, size_t& maxVLen, size_t& maxPLen) {
+    std::mt19937 rng(static_cast<unsigned>(
+        std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+
+    while (true) {
+        std::cout
+            << "\nMeniu:\n"
+            << "1 - Įvesti ranka (vardas pavardė, tada ND ir egz)\n"
+            << "2 - Generuoti pažymius (vardą/pavardę įvedate)\n"
+            << "3 - Generuoti vardus, pavardes ir pažymius\n"
+            << "4 - Baigti darbą\n";
+
+        const int choice = readIntInRange("Pasirinkimas (1-4): ", 1, 4);
+        if (choice == 4) break;
+
+        if (choice == 1) {
+            std::vector<int> nd;
+            while (true) {
+                std::string v, p;
+                if (!readNameSurname(v, p)) break;
+
+                readHomeworkInteractive(nd);
+                const int egz = readIntInRange("Egzamino pažymys (1..10): ", 1, 10);
+
+                StudentRec s;
+                s.vardas = std::move(v);
+                s.pavarde = std::move(p);
+                s.galVid = calcFinal(averageVec(nd), egz);
+                s.galMed = calcFinal(medianVec(nd), egz);
+
+                maxVLen = std::max(maxVLen, s.vardas.size());
+                maxPLen = std::max(maxPLen, s.pavarde.size());
+                students.push_back(std::move(s));
+            }
+
+        } else if (choice == 2) {
+            const int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
+            std::vector<int> nd;
+            nd.reserve(static_cast<size_t>(k));
+
+            while (true) {
+                std::string v, p;
+                if (!readNameSurname(v, p)) break;
+
+                nd.clear();
+                for (int i = 0; i < k; ++i) nd.push_back(rndGrade(rng));
+                const int egz = rndGrade(rng);
+
+                StudentRec s;
+                s.vardas = std::move(v);
+                s.pavarde = std::move(p);
+                s.galVid = calcFinal(averageVec(nd), egz);
+                s.galMed = calcFinal(medianVec(nd), egz);
+
+                maxVLen = std::max(maxVLen, s.vardas.size());
+                maxPLen = std::max(maxPLen, s.pavarde.size());
+                students.push_back(std::move(s));
+            }
+
+        } else if (choice == 3) {
+            const int genM = readIntInRange("Kiek studentų sugeneruoti? (1..200): ", 1, 200);
+            const int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
+
+            static const std::vector<std::string> maleNames = {
+                "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"
+            };
+            static const std::vector<std::string> femaleNames = {
+                "Ieva","Gabija","Egle","Monika","Austeja","Greta","Juste","Ugne"
+            };
+            static const std::vector<std::string> maleSurnames = {
+                "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Vaitkus","Stankevicius","Brazdeikis","Jankauskas"
+            };
+            static const std::vector<std::string> femaleSurnames = {
+                "Sabonyte","Kurtinaityte","Petrauskaite","Kazlauskaite","Vaitkute","Stankeviciute","Brazdeikyte","Jankauskaite"
+            };
+
+            std::uniform_int_distribution<size_t> dMaleName(0, maleNames.size() - 1);
+            std::uniform_int_distribution<size_t> dFemaleName(0, femaleNames.size() - 1);
+            std::uniform_int_distribution<size_t> dMaleSur(0, maleSurnames.size() - 1);
+            std::uniform_int_distribution<size_t> dFemaleSur(0, femaleSurnames.size() - 1);
+            std::bernoulli_distribution pickFemale(0.5);
+
+            std::vector<int> nd;
+            nd.reserve(static_cast<size_t>(k));
+
+            for (int i = 0; i < genM; ++i) {
+                StudentRec s;
+                const bool isFemale = pickFemale(rng);
+                if (isFemale) {
+                    s.vardas = femaleNames[dFemaleName(rng)];
+                    s.pavarde = femaleSurnames[dFemaleSur(rng)];
+                } else {
+                    s.vardas = maleNames[dMaleName(rng)];
+                    s.pavarde = maleSurnames[dMaleSur(rng)];
+                }
+
+                nd.clear();
+                for (int j = 0; j < k; ++j) nd.push_back(rndGrade(rng));
+                const int egz = rndGrade(rng);
+
+                s.galVid = calcFinal(averageVec(nd), egz);
+                s.galMed = calcFinal(medianVec(nd), egz);
+
+                maxVLen = std::max(maxVLen, s.vardas.size());
+                maxPLen = std::max(maxPLen, s.pavarde.size());
+                students.push_back(std::move(s));
+            }
+        }
+    }
+}
+
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
+    std::vector<StudentRec> students;
+    size_t maxVLen = 0;
+    size_t maxPLen = 0;
+
     try {
-        std::mt19937 rng(static_cast<unsigned>(
-            std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+        std::cout
+            << "v0.1.3 - Studentų galutinio balo skaičiuoklė\n"
+            << "1 - Nuskaityti studentus iš failo\n"
+            << "2 - Įvesti / generuoti (v0.1 meniu)\n";
 
-        std::vector<StudentRec> students;
+        const int mode = readIntInRange("Pasirinkimas (1-2): ", 1, 2);
 
-        while (true) {
-            printMenu();
-            int choice = readIntInRange("Pasirinkimas (1-4): ", 1, 4);
-            if (choice == 4) break;
-
-            if (choice == 1) {
-                std::cout << "\n--- Rankinis įvedimas ---\n";
-                while (true) {
-                    std::string v, p;
-                    if (!readNameSurname(v, p)) break;
-
-                    std::vector<int> nd;
-                    readHomeworkInteractive(nd);
-                    int egz = readIntInRange("Egzamino pažymys (1..10): ", 1, 10);
-
-                    students.push_back(makeRec(std::move(v), std::move(p), nd, egz));
-                }
-
-            } else if (choice == 2) {
-                std::cout << "\n--- Vardą/pavardę įvedate, pažymius generuoja ---\n";
-                int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
-
-                while (true) {
-                    std::string v, p;
-                    if (!readNameSurname(v, p)) break;
-
-                    std::vector<int> nd;
-                    nd.reserve(static_cast<size_t>(k));
-                    for (int i = 0; i < k; ++i) nd.push_back(rndGrade(rng));
-                    int egz = rndGrade(rng);
-
-                    students.push_back(makeRec(std::move(v), std::move(p), nd, egz));
-                }
-
-            } else if (choice == 3) {
-                std::cout << "\n--- Generuojami vardai, pavardės ir pažymiai ---\n";
-                int genM = readIntInRange("Kiek studentų sugeneruoti? (1..200): ", 1, 200);
-                int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
-
-                static const std::vector<std::string> maleNames = {
-                    "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"
-                };
-                static const std::vector<std::string> femaleNames = {
-                    "Ieva","Gabija","Egle","Monika","Austeja","Greta","Juste","Ugne"
-                };
-                static const std::vector<std::string> maleSurnames = {
-                    "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Vaitkus","Stankevicius","Brazdeikis","Jankauskas"
-                };
-                static const std::vector<std::string> femaleSurnames = {
-                    "Sabonyte","Kurtinaityte","Petrauskaite","Kazlauskaite","Vaitkute","Stankeviciute","Brazdeikyte","Jankauskaite"
-                };
-
-                std::uniform_int_distribution<size_t> dMaleName(0, maleNames.size() - 1);
-                std::uniform_int_distribution<size_t> dFemaleName(0, femaleNames.size() - 1);
-                std::uniform_int_distribution<size_t> dMaleSur(0, maleSurnames.size() - 1);
-                std::uniform_int_distribution<size_t> dFemaleSur(0, femaleSurnames.size() - 1);
-                std::bernoulli_distribution pickFemale(0.5);
-
-                for (int i = 0; i < genM; ++i) {
-                    std::string v, p;
-                    const bool isFemale = pickFemale(rng);
-                    if (isFemale) {
-                        v = femaleNames[dFemaleName(rng)];
-                        p = femaleSurnames[dFemaleSur(rng)];
-                    } else {
-                        v = maleNames[dMaleName(rng)];
-                        p = maleSurnames[dMaleSur(rng)];
-                    }
-
-                    std::vector<int> nd;
-                    nd.reserve(static_cast<size_t>(k));
-                    for (int j = 0; j < k; ++j) nd.push_back(rndGrade(rng));
-                    int egz = rndGrade(rng);
-
-                    students.push_back(makeRec(std::move(v), std::move(p), nd, egz));
-                }
-            }
+        if (mode == 1) {
+            std::string filename = readLineTrimmedPrompted("\nĮveskite failo pavadinimą:\n> ");
+            if (filename.empty()) filename = "kursiokai.txt";
+            readStudentsFromFileVec(filename, students, maxVLen, maxPLen);
+        } else {
+            menuV01Style(students, maxVLen, maxPLen);
         }
 
         if (students.empty()) {
-            std::cout << "\nNėra įvestų studentų.\n";
+            std::cout << "\nNėra studentų duomenų.\n";
             return 0;
         }
 
-        printTable(students);
+        printTable(std::cout, students, maxVLen, maxPLen);
         return 0;
 
     } catch (const std::exception& e) {
