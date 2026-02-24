@@ -2,8 +2,9 @@
 #include <chrono>
 #include <iomanip>
 #include <iostream>
-#include <limits>
 #include <random>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -19,22 +20,46 @@ struct Student {
     double galMed = 0.0;
 };
 
-static void clearBadInput() {
-    std::cin.clear();
-    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+// v0.1.1 - pereita prie getline + parsing (mažiau buferio bėdų)
+static std::string trimWs(std::string s) {
+    auto isTrim = [](unsigned char c) { return c == ' ' || c == '\t' || c == '\r' || c == '\n'; };
+    size_t start = 0;
+    while (start < s.size() && isTrim(static_cast<unsigned char>(s[start]))) ++start;
+    size_t end = s.size();
+    while (end > start && isTrim(static_cast<unsigned char>(s[end - 1]))) --end;
+    return s.substr(start, end - start);
+}
+
+static std::string readLinePrompted(const std::string& prompt) {
+    std::cout << prompt << std::flush;
+    std::string line;
+    if (!std::getline(std::cin, line)) {
+        throw std::runtime_error("Input stream closed (EOF).");
+    }
+    return line;
 }
 
 int readIntInRange(const std::string& prompt, int minVal, int maxVal) {
     while (true) {
-        std::cout << prompt << std::flush;
-        int x;
-        if (std::cin >> x) {
-            if (x >= minVal && x <= maxVal) return x;
-            std::cout << "Klaida: reikšmė turi būti [" << minVal << ".." << maxVal << "].\n";
-        } else {
+        const std::string line = trimWs(readLinePrompted(prompt));
+        if (line.empty()) {
             std::cout << "Klaida: įveskite skaičių.\n";
-            clearBadInput();
+            continue;
         }
+
+        std::istringstream iss(line);
+        int x;
+        char extra;
+        if (!(iss >> x) || (iss >> extra)) {
+            std::cout << "Klaida: neteisingas formatas (rašykite tik skaičių).\n";
+            continue;
+        }
+
+        if (x < minVal || x > maxVal) {
+            std::cout << "Klaida: reikšmė turi būti [" << minVal << ".." << maxVal << "].\n";
+            continue;
+        }
+        return x;
     }
 }
 
@@ -79,7 +104,6 @@ void printMenu() {
         << std::flush;
 }
 
-// Output: Vardas then Pavardė
 void printTable(const std::vector<Student>& students) {
     std::cout << "\n";
     std::cout << std::left << std::setw(15) << "Vardas"
@@ -89,29 +113,36 @@ void printTable(const std::vector<Student>& students) {
               << "\n";
     std::cout << std::string(66, '-') << "\n";
 
+    std::cout << std::fixed << std::setprecision(2);
     for (const auto& s : students) {
         std::cout << std::left << std::setw(15) << s.vardas
                   << std::left << std::setw(15) << s.pavarde
-                  << std::fixed << std::setprecision(2)
                   << std::left << std::setw(18) << s.galVid
                   << std::left << std::setw(18) << s.galMed
                   << "\n";
     }
 }
 
-// Reads "vardas pavarde" in one go. Type 0 as first token to stop.
 bool readNameSurname(Student& s) {
-    std::cout << "\nĮveskite: vardas pavardė (arba 0, kad baigti): " << std::flush;
-    std::string v;
-    if (!(std::cin >> v)) return false;
-    if (v == "0") return false;
+    while (true) {
+        const std::string line = trimWs(readLinePrompted(
+            "\nĮveskite: vardas pavardė (arba 0, kad baigti): "));
+        if (line == "0") return false;
+        if (line.empty()) continue;
 
-    std::string p;
-    if (!(std::cin >> p)) return false;
+        std::istringstream iss(line);
+        std::string v, p;
+        if (!(iss >> v)) continue;
+        if (v == "0") return false;
+        if (!(iss >> p)) {
+            std::cout << "Klaida: įveskite ir pavardę (formatas: vardas pavardė).\n";
+            continue;
+        }
 
-    s.vardas = v;
-    s.pavarde = p;
-    return true;
+        s.vardas = std::move(v);
+        s.pavarde = std::move(p);
+        return true;
+    }
 }
 
 void readHomeworkInteractive(Student& s) {
@@ -123,7 +154,7 @@ void readHomeworkInteractive(Student& s) {
         int g = readIntInRange("ND: ", 0, 10);
         if (g == 0) break;
         s.nd.push_back(g);
-        if (s.nd.size() >= 50) { // optional limit to match array MAX_ND
+        if (s.nd.size() >= 50) {
             std::cout << "Pasiektas ND limitas (50).\n";
             break;
         }
@@ -138,103 +169,101 @@ int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
 
-    std::mt19937 rng(static_cast<unsigned>(
-        std::chrono::high_resolution_clock::now().time_since_epoch().count()));
+    try {
+        std::mt19937 rng(static_cast<unsigned>(
+            std::chrono::high_resolution_clock::now().time_since_epoch().count()));
 
-    std::vector<Student> students;
+        std::vector<Student> students;
 
-    while (true) {
-        printMenu();
-        int choice = readIntInRange("Pasirinkimas (1-4): ", 1, 4);
-        if (choice == 4) break;
+        while (true) {
+            printMenu();
+            int choice = readIntInRange("Pasirinkimas (1-4): ", 1, 4);
+            if (choice == 4) break;
 
-        if (choice == 1) {
-            std::cout << "\n--- Rankinis įvedimas ---\n";
-            while (true) {
-                Student s;
-                if (!readNameSurname(s)) break;
+            if (choice == 1) {
+                std::cout << "\n--- Rankinis įvedimas ---\n";
+                while (true) {
+                    Student s;
+                    if (!readNameSurname(s)) break;
 
-                std::cout << "Studentas: " << s.vardas << " " << s.pavarde << "\n";
-                readHomeworkInteractive(s);
-                s.egz = readIntInRange("Egzamino pažymys (1..10): ", 1, 10);
+                    readHomeworkInteractive(s);
+                    s.egz = readIntInRange("Egzamino pažymys (1..10): ", 1, 10);
 
-                computeBothFinals(s);
-                students.push_back(std::move(s));
-            }
-        } else if (choice == 2) {
-            std::cout << "\n--- Vardą/pavardę įvedate, pažymius generuoja ---\n";
-            int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
-
-            while (true) {
-                Student s;
-                if (!readNameSurname(s)) break;
-
-                std::cout << "Studentas: " << s.vardas << " " << s.pavarde
-                          << " (generuojami pažymiai...)\n";
-
-                s.nd.clear();
-                s.nd.reserve(static_cast<size_t>(k));
-                for (int i = 0; i < k; ++i) s.nd.push_back(rndGrade(rng));
-                s.egz = rndGrade(rng);
-
-                computeBothFinals(s);
-                students.push_back(std::move(s));
-            }
-        } else if (choice == 3) {
-            std::cout << "\n--- Generuojami vardai, pavardės ir pažymiai ---\n";
-            int genM = readIntInRange("Kiek studentų sugeneruoti? (1..200): ", 1, 200);
-            int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
-
-            // Atskiri duomenų rinkiniai vyrų ir moterų vardams/pavardėms
-            static const std::vector<std::string> maleNames = {
-                "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"
-            };
-            static const std::vector<std::string> femaleNames = {
-                "Ieva","Gabija","Egle","Monika","Austeja","Greta","Juste","Ugne"
-            };
-
-            // Lietuviškos pavardės dažnai turi skirtingas formas (pvz., -as/-is vs -aitė/-ytė/-ienė).
-            // Čia pateikiami atskiri sąrašai sugeneravimui.
-            static const std::vector<std::string> maleSurnames = {
-                "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Vaitkus","Stankevicius","Brazdeikis","Jankauskas"
-            };
-            static const std::vector<std::string> femaleSurnames = {
-                "Sabonyte","Kurtinaityte","Petrauskaite","Kazlauskaite","Vaitkute","Stankeviciute","Brazdeikyte","Jankauskaite"
-            };
-
-            std::uniform_int_distribution<size_t> dMaleName(0, maleNames.size() - 1);
-            std::uniform_int_distribution<size_t> dFemaleName(0, femaleNames.size() - 1);
-            std::uniform_int_distribution<size_t> dMaleSur(0, maleSurnames.size() - 1);
-            std::uniform_int_distribution<size_t> dFemaleSur(0, femaleSurnames.size() - 1);
-            std::bernoulli_distribution pickFemale(0.5);
-
-            for (int i = 0; i < genM; ++i) {
-                Student s;
-                const bool isFemale = pickFemale(rng);
-                if (isFemale) {
-                    s.vardas = femaleNames[dFemaleName(rng)];
-                    s.pavarde = femaleSurnames[dFemaleSur(rng)];
-                } else {
-                    s.vardas = maleNames[dMaleName(rng)];
-                    s.pavarde = maleSurnames[dMaleSur(rng)];
+                    computeBothFinals(s);
+                    students.push_back(std::move(s));
                 }
+            } else if (choice == 2) {
+                std::cout << "\n--- Vardą/pavardę įvedate, pažymius generuoja ---\n";
+                int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
 
-                s.nd.reserve(static_cast<size_t>(k));
-                for (int j = 0; j < k; ++j) s.nd.push_back(rndGrade(rng));
-                s.egz = rndGrade(rng);
+                while (true) {
+                    Student s;
+                    if (!readNameSurname(s)) break;
 
-                computeBothFinals(s);
-                students.push_back(std::move(s));
+                    s.nd.clear();
+                    s.nd.reserve(static_cast<size_t>(k));
+                    for (int i = 0; i < k; ++i) s.nd.push_back(rndGrade(rng));
+                    s.egz = rndGrade(rng);
+
+                    computeBothFinals(s);
+                    students.push_back(std::move(s));
+                }
+            } else if (choice == 3) {
+                std::cout << "\n--- Generuojami vardai, pavardės ir pažymiai ---\n";
+                int genM = readIntInRange("Kiek studentų sugeneruoti? (1..200): ", 1, 200);
+                int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
+
+                static const std::vector<std::string> maleNames = {
+                    "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"
+                };
+                static const std::vector<std::string> femaleNames = {
+                    "Ieva","Gabija","Egle","Monika","Austeja","Greta","Juste","Ugne"
+                };
+                static const std::vector<std::string> maleSurnames = {
+                    "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Vaitkus","Stankevicius","Brazdeikis","Jankauskas"
+                };
+                static const std::vector<std::string> femaleSurnames = {
+                    "Sabonyte","Kurtinaityte","Petrauskaite","Kazlauskaite","Vaitkute","Stankeviciute","Brazdeikyte","Jankauskaite"
+                };
+
+                std::uniform_int_distribution<size_t> dMaleName(0, maleNames.size() - 1);
+                std::uniform_int_distribution<size_t> dFemaleName(0, femaleNames.size() - 1);
+                std::uniform_int_distribution<size_t> dMaleSur(0, maleSurnames.size() - 1);
+                std::uniform_int_distribution<size_t> dFemaleSur(0, femaleSurnames.size() - 1);
+                std::bernoulli_distribution pickFemale(0.5);
+
+                for (int i = 0; i < genM; ++i) {
+                    Student s;
+                    const bool isFemale = pickFemale(rng);
+                    if (isFemale) {
+                        s.vardas = femaleNames[dFemaleName(rng)];
+                        s.pavarde = femaleSurnames[dFemaleSur(rng)];
+                    } else {
+                        s.vardas = maleNames[dMaleName(rng)];
+                        s.pavarde = maleSurnames[dMaleSur(rng)];
+                    }
+
+                    s.nd.reserve(static_cast<size_t>(k));
+                    for (int j = 0; j < k; ++j) s.nd.push_back(rndGrade(rng));
+                    s.egz = rndGrade(rng);
+
+                    computeBothFinals(s);
+                    students.push_back(std::move(s));
+                }
             }
         }
-    }
 
-    if (students.empty()) {
-        std::cout << "\nNėra įvestų studentų.\n";
+        if (students.empty()) {
+            std::cout << "\nNėra įvestų studentų.\n";
+            return 0;
+        }
+
+        for (auto& s : students) computeBothFinals(s);
+        printTable(students);
         return 0;
-    }
 
-    for (auto& s : students) computeBothFinals(s);
-    printTable(students);
-    return 0;
+    } catch (const std::exception& e) {
+        std::cerr << "\n[KLAIDA] " << e.what() << "\n";
+        return 1;
+    }
 }
