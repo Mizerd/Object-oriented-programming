@@ -12,7 +12,7 @@
 constexpr double kNdWeight = 0.4;
 constexpr double kEgzWeight = 0.6;
 
-// v0.1.3 - pridedamas failo nuskaitymas (v0.2 pradžia)
+// v0.1.4 - rikiavimas + išvedimas į failą (be paskutinio „polish“ lygio)
 struct StudentRec {
     std::string vardas;
     std::string pavarde;
@@ -35,7 +35,6 @@ static std::string readLinePrompted(const std::string& prompt) {
     if (!std::getline(std::cin, line)) throw std::runtime_error("Input stream closed (EOF).");
     return line;
 }
-
 static std::string readLineTrimmedPrompted(const std::string& prompt) {
     return trimAscii(readLinePrompted(prompt));
 }
@@ -146,8 +145,8 @@ static void printTable(std::ostream& out,
     const size_t wG = 18;
 
     printHeader(out, wV, wP);
-    out << std::fixed << std::setprecision(2);
 
+    out << std::fixed << std::setprecision(2);
     for (const auto& s : students) {
         out << std::left << std::setw(static_cast<int>(wV)) << s.vardas
             << std::left << std::setw(static_cast<int>(wP)) << s.pavarde
@@ -162,7 +161,7 @@ static size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
     std::vector<std::string> tokens;
     for (std::string t; iss >> t;) tokens.push_back(std::move(t));
     if (tokens.size() < 4) {
-        throw std::runtime_error("Neteisinga antraštė (Vardas Pavarde ND.. Egz).");
+        throw std::runtime_error("Neteisinga antraštė: turi būti bent 4 stulpeliai (Vardas Pavarde ND.. Egz).");
     }
     return tokens.size() - 3;
 }
@@ -184,15 +183,18 @@ static void readStudentsFromFileVec(const std::string& filename,
     std::vector<int> tmp(ndCount);
 
     std::string v, p;
+    size_t lineNo = 1;
     while (in >> v >> p) {
+        ++lineNo;
+
         long long sum = 0;
         for (size_t i = 0; i < ndCount; ++i) {
-            if (!(in >> nd[i])) throw std::runtime_error("Trūksta ND reikšmių (failo formatas).");
+            if (!(in >> nd[i])) throw std::runtime_error("Trūksta ND reikšmių eilutėje " + std::to_string(lineNo));
             sum += nd[i];
         }
 
         int egz = 0;
-        if (!(in >> egz)) throw std::runtime_error("Trūksta egzamino pažymio (failo formatas).");
+        if (!(in >> egz)) throw std::runtime_error("Trūksta egzamino pažymio eilutėje " + std::to_string(lineNo));
 
         const double avg = ndCount ? (static_cast<double>(sum) / static_cast<double>(ndCount)) : 0.0;
         tmp = nd;
@@ -211,6 +213,43 @@ static void readStudentsFromFileVec(const std::string& filename,
     }
 
     if (out.empty()) throw std::runtime_error("Faile nerasta studentų įrašų: " + filename);
+}
+
+enum class SortKey {
+    ByName = 1,
+    BySurname = 2,
+    ByFinalAvg = 3,
+    ByFinalMed = 4
+};
+
+static void sortStudents(std::vector<StudentRec>& students, SortKey key) {
+    auto byName = [](const StudentRec& a, const StudentRec& b) {
+        if (a.vardas != b.vardas) return a.vardas < b.vardas;
+        if (a.pavarde != b.pavarde) return a.pavarde < b.pavarde;
+        return a.galVid < b.galVid;
+    };
+    auto bySurname = [](const StudentRec& a, const StudentRec& b) {
+        if (a.pavarde != b.pavarde) return a.pavarde < b.pavarde;
+        if (a.vardas != b.vardas) return a.vardas < b.vardas;
+        return a.galVid < b.galVid;
+    };
+    auto byFinalAvg = [](const StudentRec& a, const StudentRec& b) {
+        if (a.galVid != b.galVid) return a.galVid < b.galVid;
+        if (a.pavarde != b.pavarde) return a.pavarde < b.pavarde;
+        return a.vardas < b.vardas;
+    };
+    auto byFinalMed = [](const StudentRec& a, const StudentRec& b) {
+        if (a.galMed != b.galMed) return a.galMed < b.galMed;
+        if (a.pavarde != b.pavarde) return a.pavarde < b.pavarde;
+        return a.vardas < b.vardas;
+    };
+
+    switch (key) {
+        case SortKey::ByName:     std::sort(students.begin(), students.end(), byName);     break;
+        case SortKey::BySurname:  std::sort(students.begin(), students.end(), bySurname);  break;
+        case SortKey::ByFinalAvg: std::sort(students.begin(), students.end(), byFinalAvg); break;
+        case SortKey::ByFinalMed: std::sort(students.begin(), students.end(), byFinalMed); break;
+    }
 }
 
 static void menuV01Style(std::vector<StudentRec>& students, size_t& maxVLen, size_t& maxPLen) {
@@ -233,7 +272,6 @@ static void menuV01Style(std::vector<StudentRec>& students, size_t& maxVLen, siz
             while (true) {
                 std::string v, p;
                 if (!readNameSurname(v, p)) break;
-
                 readHomeworkInteractive(nd);
                 const int egz = readIntInRange("Egzamino pažymys (1..10): ", 1, 10);
 
@@ -276,17 +314,20 @@ static void menuV01Style(std::vector<StudentRec>& students, size_t& maxVLen, siz
             const int genM = readIntInRange("Kiek studentų sugeneruoti? (1..200): ", 1, 200);
             const int k = readIntInRange("Kiek ND generuoti kiekvienam studentui? (1..50): ", 1, 50);
 
+            // jau naudojame lietuviškas raides (pasiruošimas v0.2 UTF-8 komentarui)
             static const std::vector<std::string> maleNames = {
-                "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"
+                "Arvydas", "Rimas", "Mantas", "Lukas", "Tomas", "Paulius", "Jonas", "Darius"
             };
             static const std::vector<std::string> femaleNames = {
-                "Ieva","Gabija","Egle","Monika","Austeja","Greta","Juste","Ugne"
+                "Ieva", "Gabija", "Eglė", "Monika", "Austėja", "Greta", "Justė", "Ugnė"
             };
             static const std::vector<std::string> maleSurnames = {
-                "Sabonis","Kurtinaitis","Petrauskas","Kazlauskas","Vaitkus","Stankevicius","Brazdeikis","Jankauskas"
+                "Sabonis", "Kurtinaitis", "Petrauskas", "Kazlauskas", "Vaitkus",
+                "Stankevičius", "Brazdeikis", "Jankauskas"
             };
             static const std::vector<std::string> femaleSurnames = {
-                "Sabonyte","Kurtinaityte","Petrauskaite","Kazlauskaite","Vaitkute","Stankeviciute","Brazdeikyte","Jankauskaite"
+                "Sabonytė", "Kurtinaitytė", "Petrauskaitė", "Kazlauskaitė", "Vaitkutė",
+                "Stankevičiūtė", "Brazdeikytė", "Jankauskaitė"
             };
 
             std::uniform_int_distribution<size_t> dMaleName(0, maleNames.size() - 1);
@@ -329,20 +370,24 @@ int main() {
     std::cin.tie(nullptr);
 
     std::vector<StudentRec> students;
+    students.reserve(10000);
+
     size_t maxVLen = 0;
     size_t maxPLen = 0;
 
     try {
         std::cout
-            << "v0.1.3 - Studentų galutinio balo skaičiuoklė\n"
+            << "v0.1.4 - Studentų galutinio balo skaičiuoklė\n"
             << "1 - Nuskaityti studentus iš failo\n"
             << "2 - Įvesti / generuoti (v0.1 meniu)\n";
 
         const int mode = readIntInRange("Pasirinkimas (1-2): ", 1, 2);
 
         if (mode == 1) {
-            std::string filename = readLineTrimmedPrompted("\nĮveskite failo pavadinimą:\n> ");
+            std::string filename = readLineTrimmedPrompted(
+                "\nĮveskite failo pavadinimą (pvz. kursiokai.txt, studentai10000.txt):\n> ");
             if (filename.empty()) filename = "kursiokai.txt";
+
             readStudentsFromFileVec(filename, students, maxVLen, maxPLen);
         } else {
             menuV01Style(students, maxVLen, maxPLen);
@@ -353,7 +398,37 @@ int main() {
             return 0;
         }
 
-        printTable(std::cout, students, maxVLen, maxPLen);
+        std::cout
+            << "\nRikiavimas:\n"
+            << "1 - pagal vardą\n"
+            << "2 - pagal pavardę\n"
+            << "3 - pagal Galutinis (Vid.)\n"
+            << "4 - pagal Galutinis (Med.)\n";
+
+        const int sortChoice = readIntInRange("Pasirinkimas (1-4): ", 1, 4);
+        sortStudents(students, static_cast<SortKey>(sortChoice));
+
+        std::cout
+            << "\nIšvedimas:\n"
+            << "1 - į ekraną\n"
+            << "2 - į failą\n";
+
+        const int outChoice = readIntInRange("Pasirinkimas (1-2): ", 1, 2);
+
+        if (outChoice == 1) {
+            printTable(std::cout, students, maxVLen, maxPLen);
+        } else {
+            std::string outName = readLineTrimmedPrompted(
+                "\nĮveskite rezultatų failo pavadinimą (pvz. rezultatai.txt):\n> ");
+            if (outName.empty()) outName = "rezultatai.txt";
+
+            std::ofstream out(outName);
+            if (!out) throw std::runtime_error("Nepavyko sukurti rezultatų failo: " + outName);
+
+            printTable(out, students, maxVLen, maxPLen);
+            std::cout << "\nRezultatai įrašyti į failą: " << outName << "\n";
+        }
+
         return 0;
 
     } catch (const std::exception& e) {
