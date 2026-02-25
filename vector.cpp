@@ -30,7 +30,7 @@
 //  - UPDATE: File output uses a larger gap between surname and grade columns.
 //
 // Build:
-//   g++ -std=c++17 -Wall -Wextra -O2 -g student_fixed.cpp -o student_fixed
+//   g++ -std=c++17 -O2 -g vector.cpp -o vector
 // ============================================================
 
 constexpr double kNdWeight = 0.4;
