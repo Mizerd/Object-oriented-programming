@@ -4,8 +4,6 @@
 
 **v0.3** – C++17 konsolinė programa, kuri **nuskaito studentų duomenis iš failo į `std::vector`**, apskaičiuoja **galutinį pažymį** pagal pasirinktą metodą (**vidurkį** arba **medianą**) ir pateikia rezultatų lentelę (ekrane arba faile – priklausomai nuo realizacijos). Pagrindiniai v0.3 akcentai: **daugiafailė projekto struktūra** (`include/*.h`, `src/*.cpp`, `Makefile`) ir **minimalus, bet tikslingas `try/catch` panaudojimas** failų I/O bei įvesties validacijai. Papildomai numatyta **realiųjų skaičių įvestis su kableliu arba tašku** (`0,4` ≙ `0.4`).
 
-> Licencija: **nenurodyta** (jei kurso reikalavimai nenumato kitaip).
-
 ## Projekto paskirtis ir funkcijos
 
 Programa skirta apdoroti studentų pažymius ir apskaičiuoti galutinį balą pagal formulę:
@@ -23,7 +21,7 @@ Programa skirta apdoroti studentų pažymius ir apskaičiuoti galutinį balą pa
 
 ## Projekto struktūra
 
-Tipinė v0.3 struktūra (atnaujinkite, jei jūsų failai vadinasi kitaip):
+Tipinė v0.3 struktūra:
 
 ```text
 .
