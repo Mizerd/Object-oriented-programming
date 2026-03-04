@@ -187,82 +187,12 @@ Klaida: įvestis turi būti sveikas skaičius (pvz., 1 arba 2). Bandykite dar ka
 - Įdėtas išimčių valdymas: failų atidarymui ir įvesties tikrinimui.
 - Parseris toleruoja `0,4` ir `0.4` (jei įvedami realieji).
 
-### Šaka ir release kūrimas
-
-```bash
-git checkout v0.2
-git checkout -b v0.3
-
-git add .
-git commit -m "v0.3: multi-file refactor + exception handling"
-git push -u origin v0.3
-```
-
-Tag + release pagrindas:
-
-```bash
-git tag -a v0.3 -m "v0.3 release"
-git push origin v0.3
-```
-
 ### Mermaid laiko juosta
 
 ```mermaid
 timeline
   title Projekto leidimai
-  2026-02 : v0.1 — Pradinis funkcionalumas
-  2026-02 : v0.2 — Failų nuskaitymas į std::vector + dideli testai
-  2026-03 : v0.3 — Daugiafailis refaktoringas + try/catch + kablelis/taškas
+  2026-02-18 : v0.1 — Pradinis funkcionalumas
+  2026-02-20 : v0.2 — Failų nuskaitymas į std::vector + dideli testai
+  2026-03-04 : v0.3 — Daugiafailis refaktoringas + try/catch + kablelis/taškas
 ```
-
-## README išsaugojimas ir įkėlimas į GitHub
-
-> Atsisiuntimo nuorodos šiame README sąmoningai nededu, kad failas būtų švarus pateikimui į kursinį repozitoriumą. Žemiau – tikslūs žingsniai susikurti `README.md` lokaliai ir įkelti.
-
-### Išsaugoti kaip `README.md`
-
-1. Projekto šaknyje sukurkite failą `README.md`.
-2. Įklijuokite šį turinį.
-3. Išsaugokite.
-
-### Įkėlimas per GitHub Web UI
-
-1. GitHub’e atsidarykite repozitoriumą ir pasirinkite šaką `v0.3`.
-2. **Add file → Create new file** (arba **Upload files**).
-3. Pavadinimas: `README.md`.
-4. Įklijuokite turinį → **Commit changes**.
-
-### Įkėlimas per `git` komandas
-
-```bash
-git checkout v0.3
-git add README.md
-git commit -m "docs: add/update README for v0.3"
-git push
-```
-
-## Kodavimo stilius ir tolesni patobulinimai
-
-Trumpai apie stilių:
-
-- Standartas: **C++17** (`-std=c++17`).
-- `.h` – deklaracijos / tipai, `.cpp` – realizacijos.
-- Rekomenduojami įspėjimai: `-Wall -Wextra -pedantic` (jau yra Makefile).
-- Lentelių formatavimui: `iomanip` (`setw`, `left`, `fixed`, `setprecision(2)`).
-
-Idėjos patobulinimams:
-
-- CLI argumentai (pvz., `--input`, `--output`, `--mode vid|med`) automatiniam testavimui.
-- Vienetiniai testai medianai/vidurkiui/parseriui.
-- `std::filesystem` failų tikrinimui ir kelių valdymui.
-- Našumo optimizacijos (`vector.reserve()`, mažiau kopijavimo, išvedimas į failą dideliems duomenims).
-
-## Patikros sąrašas prieš pateikimą
-
-- [ ] Šaka `v0.3` sukelta į GitHub (`git push -u origin v0.3`).
-- [ ] Sukurtas tag `v0.3` ir GitHub release.
-- [ ] Repozitoriume yra `Makefile`.
-- [ ] Yra `include/` ir `src/` katalogai (daugiafailė struktūra).
-- [ ] Programą pavyksta sukompiliuoti (`make`) ir paleisti (`./vector` arba `./<programos_vardas>`).
-- [ ] Testiniai failai (`studentai10000.txt` ir pan.) yra prieinami pagal kurso reikalavimus.
-- [ ] Klaidos (failas neegzistuoja / bloga įvestis) apdorojamos be programos nulūžimo.
