@@ -1,193 +1,196 @@
-# v0.2 – Studentų galutinio balo skaičiuoklė (std::vector, C++17, Linux)
+# Studentų galutinio balo skaičiuoklė (C++17) – v0.3
 
-Ši programa skirta studentų pažymių apdorojimui ir galutinio balo skaičiavimui dviem būdais:
-- Galutinis (Vid.) – pagal namų darbų vidurkį
-- Galutinis (Med.) – pagal namų darbų medianą
+## Vykdomoji santrauka
 
-Programa turi 2 darbo režimus:
-1. Nuskaityti studentus iš failo (v0.2 funkcionalumas)
-2. Įvesti / generuoti interaktyviai (v0.1 meniu)
+**v0.3** – C++17 konsolinė programa, kuri **nuskaito studentų duomenis iš failo į `std::vector`**, apskaičiuoja **galutinį pažymį** pagal pasirinktą metodą (**vidurkį** arba **medianą**) ir pateikia rezultatų lentelę (ekrane arba faile – priklausomai nuo realizacijos). Pagrindiniai v0.3 akcentai: **daugiafailė projekto struktūra** (`include/*.h`, `src/*.cpp`, `Makefile`) ir **minimalus, bet tikslingas `try/catch` panaudojimas** failų I/O bei įvesties validacijai. Papildomai numatyta **realiųjų skaičių įvestis su kableliu arba tašku** (`0,4` ≙ `0.4`).
 
-------------------------------------------------------------
+## Projekto paskirtis ir funkcijos
 
-## Galutinio balo formulė
+Programa skirta apdoroti studentų pažymius ir apskaičiuoti galutinį balą pagal formulę:
 
-Naudojami svoriai:
+- **Pagal vidurkį**: `Galutinis = 0.4 * vidurkis(ND) + 0.6 * egzaminas`
+- **Pagal medianą**: `Galutinis = 0.4 * mediana(ND) + 0.6 * egzaminas`
 
-constexpr double kNdWeight = 0.4;
-constexpr double kEgzWeight = 0.6;
+Įgyvendintos (arba šioje versijoje numatytos) galimybės:
 
-Galutinis balas skaičiuojamas:
+- Nuskaitymas iš failo į `std::vector<Student>`.
+- Skaičiavimo metodo pasirinkimas: vidurkis arba mediana.
+- Klaidos valdomos per išimtis / validaciją: neteisingas failas, neteisinga įvestis, neteisingas formatas.
+- (Jei pateikti) testiniai failai: `studentai10000.txt`, `studentai100000.txt`, `studentai1000000.txt` ir pan.
+- Realiųjų skaičių parseris priima `,` arba `.` (pvz., svoriams ar kitiems realiesiems, jei įvedami).
 
-Galutinis = 0.4 * ND_reikšmė + 0.6 * Egz
+## Projekto struktūra
 
-Kur ND_reikšmė gali būti:
-- namų darbų vidurkis → Galutinis (Vid.)
-- namų darbų mediana → Galutinis (Med.)
+Tipinė v0.3 struktūra:
 
-------------------------------------------------------------
+```text
+.
+├── include/                 # deklaracijos (.h)
+│   ├── constants.h
+│   ├── types.h              # struct Student
+│   ├── input.h              # įvesties validacija
+│   ├── grades.h             # vidurkis/mediana/galutinis
+│   ├── fileio.h             # nuskaitymas iš failo
+│   ├── sorting.h            # rikiavimas (jei taikoma)
+│   ├── table.h              # spausdinimas/formatavimas
+│   └── menu.h               # meniu (jei taikoma)
+├── src/                     # realizacijos (.cpp)
+│   ├── main.cpp
+│   ├── utf8.cpp
+│   ├── input.cpp
+│   ├── grades.cpp
+│   ├── fileio.cpp
+│   ├── sorting.cpp
+│   ├── table.cpp
+│   └── menu.cpp
+├── Makefile
+└── README.md
+```
 
-## Pagrindinė duomenų struktūra
+## Kompiliavimas
 
-v0.2 versijoje naudojama struktūra:
+### Kompiliavimas su Makefile
 
-struct StudentRec {
-    std::string vardas;
-    std::string pavarde;
-    double galVid;
-    double galMed;
-};
+Pagal pateiktą `Makefile`:
 
-Skaičiavimai atliekami nuskaitymo metu, todėl saugomi tik galutiniai rezultatai.
-Tai sumažina atminties naudojimą dirbant su dideliais failais.
+- kompiliatorius: `g++`
+- vėliavos: `-std=c++17 -O2 -g -Wall -Wextra -pedantic`
+- include kelias: `-Iinclude`
+- sukompiliuotas binaras: **`vector`** (Makefile `TARGET := vector`)
 
-------------------------------------------------------------
+Kompiliavimas ir paleidimas:
 
-## Failo režimas (v0.2)
-
-Pasirinkus režimą „1 - Nuskaityti studentus iš failo“:
-
-1. Įvedamas failo pavadinimas (pvz. studentai1000000.txt)
-2. Pasirenkamas rikiavimo kriterijus:
-   - pagal vardą
-   - pagal pavardę
-   - pagal Galutinį vidurkį
-   - pagal Galutinę medianą
-3. Pasirenkamas išvedimo tipas:
-   - į ekraną
-   - į failą
-
-### Failo formatas
-
-Failas turi turėti antraštę:
-
-Vardas Pavarde ND1 ND2 ... Egz
-
-Toliau kiekvienoje eilutėje:
-
-Vardas Pavarde ND1 ND2 ... NDk Egz
-
-Namų darbų kiekis nustatomas automatiškai iš antraštės.
-
-------------------------------------------------------------
-
-## Interaktyvus režimas (v0.1)
-
-Pasirinkus režimą „2 - Įvesti / generuoti“:
-
-Galima:
-1. Įvesti studentą ranka (vardas, pavardė, ND, egzaminas)
-2. Generuoti pažymius
-3. Generuoti vardus, pavardes ir pažymius
-4. Baigti darbą
-
-Maksimalūs limitai:
-- iki 10 000 studentų
-- iki 1 000 namų darbų vienam studentui
-
-------------------------------------------------------------
-
-## Skaičiavimų logika
-
-### Vidurkis
-Visi ND susumuojami ir padalinami iš jų kiekio.
-Jei ND nėra – laikoma 0.
-
-### Mediana
-ND vektorius surūšiuojamas.
-- Jei kiekis nelyginis – imamas vidurinis elementas
-- Jei lyginis – dviejų vidurinių elementų vidurkis
-
-### Galutinio balo skaičiavimas
-
-double calcFinal(double ndValue, int egz) {
-    return 0.4 * ndValue + 0.6 * egz;
-}
-
-------------------------------------------------------------
-
-## Rikiavimas
-
-Naudojamas std::sort su lambda funkcijomis.
-
-Galima rikiuoti pagal:
-- vardą
-- pavardę
-- galutinį vidurkį
-- galutinę medianą
-
-------------------------------------------------------------
-
-## UTF-8 ir lietuviškos raidės
-
-Programa palaiko UTF-8.
-Naudojama:
-- setlocale()
-- mbsrtowcs()
-- wcwidth()
-
-Tai leidžia teisingai išlyginti lietuviškas raides lentelėje.
-
-Jei sistema neturi UTF-8 locale, programa pateikia įspėjimą.
-
-------------------------------------------------------------
-
-## Kompiliavimas (Linux)
-
-Kompiliuoti taip:
-
-g++ -std=c++17 -O2 -g vector.cpp -o vector
-
-Paleisti:
-
+```bash
+make
 ./vector
+```
 
-------------------------------------------------------------
+Išvalymas:
 
-## Testavimo aplinka
+```bash
+make clean
+```
 
-Sistema: Fedora Linux  
-Standartas: C++17  
-Kompiliatorius: g++  
+### Kompiliavimas su g++
 
-------------------------------------------------------------
+Jei kompiliuojate be Makefile, ekvivalentinė komanda:
 
-## Vykdymo laiko matavimas
+```bash
+g++ -std=c++17 -O2 -g -Wall -Wextra -pedantic -Iinclude \
+  src/main.cpp src/utf8.cpp src/input.cpp src/grades.cpp src/fileio.cpp src/sorting.cpp src/table.cpp src/menu.cpp \
+  -o vector
+```
 
-Laikas matuotas naudojant:
+> Jei binaro pavadinimą pasikeisite, vietoje `vector` naudokite `<programos_vardas>`.
 
-/usr/bin/time -p ./vector
+## Naudojimas ir įvesties formatas
 
-Kiekvienas testas buvo atliktas 5 kartus ir apskaičiuotas vidurkis.
+### Paleidimas
 
-### studentai1000000.txt
-real: 19.51 s  
-user: 1.47 s  
-sys: 0.15 s  
+```bash
+./vector
+```
 
-### studentai100000.txt
-real: 17.96 s  
-user: 0.20 s  
-sys: 0.03 s  
+Programa dažniausiai veikia interaktyviai (meniu). Tipinis scenarijus:
 
-### studentai10000.txt
-real: 12.78 s  
-user: 0.01 s  
-sys: 0.00 s  
+```text
+1 - Nuskaityti iš failo
+2 - Įvesti / generuoti
+Pasirinkimas: 1
+Failas: kursiokai.txt
+Metodas: 1-Vidurkis / 2-Mediana
+```
 
-### Laikų paaiškinimas
+### Failo formatas `kursiokai.txt`
 
-real – bendras vykdymo laikas (įskaitant failų skaitymą ir rašymą)  
-user – CPU laikas, skirtas programos skaičiavimams  
-sys – operacinės sistemos laikas (failai, sisteminiai kvietimai)
+Failo eilutės struktūra:
 
-Didžioji dalis „real“ laiko skiriama rezultatų įrašymui į failą.
+- `Vardas Pavardė ND1 ND2 ... NDn Egz`
 
-------------------------------------------------------------
+Pavyzdys:
 
-## Išvados
+```text
+Vardas Pavarde ND1 ND2 ND3 Egz
+Arvydas Sabonis 8 9 10 9
+Rimas Kurtinaitis 7 10 8 6
+Ieva Sabonytė 10 10 10 10
+```
 
-- Programa efektyviai apdoroja didelius duomenų kiekius naudojant std::vector.
-- Skaičiavimų dalis (user laikas) yra labai greita.
-- Didžiausias laiko sąnaudų šaltinis – failų įrašymas (I/O operacijos).
-- v0.2 versija pritaikyta darbui su dideliais duomenų failais ir teisingu UTF-8 atvaizdavimu.
+### Pavyzdinis rezultato išvedimas
+
+Formatas priklauso nuo jūsų lentelės realizacijos; pavyzdys:
+
+```text
+Vardas        Pavardė              Galutinis (Vid.)   Galutinis (Med.)
+----------------------------------------------------------------------
+Arvydas       Sabonis                     9.00               9.00
+Rimas         Kurtinaitis                 6.93               6.80
+Ieva          Sabonytė                   10.00              10.00
+```
+
+## Testavimas
+
+### Testavimas su pateiktais failais
+
+Jei turite didelius failus (pvz., `studentai10000.txt`), rekomenduojama:
+
+1. Paleisti programą.
+2. Pasirinkti nuskaitymą iš failo.
+3. Nurodyti vieną iš testinių failų.
+4. Pasirinkti metodą (vidurkis / mediana).
+5. (Jei realizuota) išvesti į failą, kad ekranas nebūtų perkrautas.
+
+**Ko tikėtis sėkmės atveju:**
+- išvedama lentelė su antrašte ir studentų eilutėmis;
+- galutiniai balai pateikti su 2 skaitmenimis po kablelio (pvz., `8.76`);
+- jei pasirenkamas išvedimas į failą – sukuriamas `<rezultatu_failas>.txt` (konkretus pavadinimas gali skirtis).
+
+### Našumo matavimas (nebūtina)
+
+Linux/macOS:
+
+```bash
+time ./vector
+```
+
+## Klaidų apdorojimas ir išimtys
+
+v0.3 tikslas – kad programa būtų atspari blogai įvesčiai:
+
+- **Failų I/O**: jei failo nepavyksta atidaryti / nuskaityti, metama išimtis (pvz., `std::runtime_error`), sugaunama aukštesniame lygyje ir vartotojas informuojamas.
+- **Formatas**: jei faile randamas neteisingas įrašas (pvz., raidė vietoj pažymio), pateikiamas pranešimas ir apdorojimas baigiamas aiškiai (be „crash“).
+- **Įvesties validacija**: jei vartotojas įveda neteisingą reikšmę, programa paprašo įvesti pakartotinai.
+- **Kablelis/taškas realiems**: įvedus `0,4`, programa jį interpretuoja kaip `0.4` (jei svoriai/realieji naudojami įvestyje).
+
+Pavyzdiniai (orientaciniai) pranešimai:
+
+```text
+Klaida: nepavyko atidaryti failo 'studentaiX.txt'. Patikrinkite pavadinimą ir bandykite dar kartą.
+Klaida: įvestis turi būti sveikas skaičius (pvz., 1 arba 2). Bandykite dar kartą.
+```
+
+## Versijos, Git workflow ir release
+
+### Versijų palyginimas
+
+| Versija | Pagrindiniai pokyčiai | Rezultatas |
+|---|---|---|
+| v0.1 | Bazinis funkcionalumas (įvedimas/skaičiavimas/išvedimas) | Veikiantis prototipas |
+| v0.2 | Nuskaitymas iš failo į `std::vector`, testai su dideliais failais | Darbas su failais ir didesniais duomenimis |
+| v0.3 | Daugiafailė struktūra + `try/catch` I/O ir įvesties validacijai + `,`/`.` realiems | Aiškesnė architektūra ir stabilumas |
+
+### Kas pasikeitė v0.3 lyginant su v0.2
+
+- Kodas išskaidytas į deklaracijas (`include/*.h`) ir realizacijas (`src/*.cpp`).
+- Įdėtas išimčių valdymas: failų atidarymui ir įvesties tikrinimui.
+- Parseris toleruoja `0,4` ir `0.4` (jei įvedami realieji).
+
+### Mermaid laiko juosta
+
+```mermaid
+timeline
+  title Projekto leidimai
+  2026-02-18 : v0.1 — Pradinis funkcionalumas
+  2026-02-20 : v0.2 — Failų nuskaitymas į std::vector + dideli testai
+  2026-03-04 : v0.3 — Daugiafailis refaktoringas + try/catch + kablelis/taškas
+```
