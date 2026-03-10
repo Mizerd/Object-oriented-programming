@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -O2 -g -Wall -Wextra -pedantic
+CXXFLAGS := -std=c++17 -O3 -g -Wall -Wextra -pedantic -march=native
 INCLUDES := -Iinclude
 
 SRC := \
@@ -10,7 +10,8 @@ SRC := \
 	src/fileio.cpp \
 	src/sorting.cpp \
 	src/table.cpp \
-	src/menu.cpp
+	src/menu.cpp \
+	src/fileGenerator.cpp
 
 TARGET := vector
 
