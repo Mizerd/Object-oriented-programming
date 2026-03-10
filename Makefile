@@ -1,5 +1,5 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -O2 -g -Wall -Wextra -pedantic
+CXXFLAGS := -std=c++17 -O3 -g -Wall -Wextra -pedantic
 INCLUDES := -Iinclude
 
 SRC := \
