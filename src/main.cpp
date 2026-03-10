@@ -34,11 +34,11 @@ static Weights chooseWeights() {
 
     while (true) {
         try {
-            const double nd = inp::readDoubleInRange("Iveskite ND svori (0..1): ", 0.0, 1.0);
-            const double egz = inp::readDoubleInRange("Iveskite Egz svori (0..1): ", 0.0, 1.0);
+            const double nd = inp::readDoubleInRange("Įveskite ND svorį (0..1): ", 0.0, 1.0);
+            const double egz = inp::readDoubleInRange("Įveskite Egz svorį (0..1): ", 0.0, 1.0);
 
             if (std::abs((nd + egz) - 1.0) > 1e-9) {
-                throw std::runtime_error("Svoriu suma turi buti lygi 1.0.");
+                throw std::runtime_error("Svorių suma turi būti lygi 1.0.");
             }
 
             w.nd = nd;
@@ -47,7 +47,7 @@ static Weights chooseWeights() {
 
         } catch (const std::exception& e) {
             std::cout << "Klaida: " << e.what() << "\n";
-            const char again = inp::readCharFromSet("Bandyti dar karta? (t/n) [t]: ", "tn", 't');
+            const char again = inp::readCharFromSet("Bandyti dar kartą? (t/n) [t]: ", "tn", 't');
             if (again == 'n') return Weights{cfg::kDefaultNdWeight, cfg::kDefaultEgzWeight};
         }
     }
@@ -84,18 +84,18 @@ static std::string chooseTxtFileFromDirectory() {
 
         std::cout << "----------------------------------------\n";
         const int choice = inp::readIntInRange(
-            "Pasirinkite failo numeri: ", 0, static_cast<int>(files.size()) - 1);
+            "Pasirinkite failo numerį: ", 0, static_cast<int>(files.size()) - 1);
 
         return files[static_cast<std::size_t>(choice)];
     }
 }
 
 static void printMainMenu() {
-    std::cout << "\nDarbo rezimas:\n"
-    << "1 - Nuskaityti studentus is failo\n"
-    << "2 - Ivesti / generuoti (v0.1 meniu)\n"
-    << "3 - Generuoti testinius failus\n"
-    << "4 - Baigti darba\n";
+    std::cout << "\nDarbo rėžimas:\n"
+    << "1 - Nuskaityti studentus iš failo\n"
+    << "2 - Įvesti / generuoti (v0.1 meniu)\n"
+    << "3 - Generuoti studentų failus\n"
+    << "4 - Baigti darbą\n";
 }
 
 int main() {
@@ -105,7 +105,7 @@ int main() {
     std::cin.tie(nullptr);
 
     try {
-        std::cout << "v0.4 - Studentu galutinio balo skaiciuokle\n";
+        std::cout << "v0.4 - Studentų galutinio balo skaiciuoklė\n";
 
         const Weights weights = chooseWeights();
 
@@ -120,11 +120,11 @@ int main() {
 
             if (mode == 3) {
                 const int ndCount = inp::readIntInRange(
-                    "Kiek ND turi tureti kiekvienas studentas? ", 1, 1000);
+                    "Kiek ND turi turėti kiekvienas studentas? ", 1, 1000);
 
                 generateTestFiles(ndCount);
 
-                std::cout << "\nTestiniai failai sugeneruoti. Griztama i pagrindini meniu.\n";
+                std::cout << "\nStudentų failai sugeneruoti. Grįžtama į pagrindinį meniu.\n";
                 continue;
             }
 
@@ -157,7 +157,7 @@ int main() {
                     } catch (const std::exception& e) {
                         std::cout << "\nKlaida: " << e.what() << "\n";
                         const char again = inp::readCharFromSet(
-                            "Bandyti pasirinkti faila dar karta? (t/n) [t]: ", "tn", 't');
+                            "Bandyti pasirinkti failą dar kartą? (t/n) [t]: ", "tn", 't');
                         if (again == 'n') {
                             students.clear();
                             break;
@@ -169,15 +169,15 @@ int main() {
             }
 
             if (students.empty()) {
-                std::cout << "\nNera studentu duomenu. Griztama i pagrindini meniu.\n";
+                std::cout << "\nNėra studentų duomenų. Grįžtama į pagrindinį meniu.\n";
                 continue;
             }
 
             std::cout << "\nRikiavimas:\n"
-            << "1 - pagal varda\n"
-            << "2 - pagal pavarde\n"
-            << "3 - pagal Galutini vidurki\n"
-            << "4 - pagal Galutine mediana\n";
+            << "1 - pagal vardą\n"
+            << "2 - pagal pavardę\n"
+            << "3 - pagal Galutinį vidurkį\n"
+            << "4 - pagal Galutinę medianą\n";
 
             const int sortChoice = inp::readIntInRange("Pasirinkimas (1-4): ", 1, 4);
             const SortKey key = static_cast<SortKey>(sortChoice);
@@ -206,59 +206,59 @@ int main() {
             }
 
             const auto splitEnd = timer::now();
-            timer::print("Padalijimo i dvi grupes laikas", timer::seconds(splitStart, splitEnd));
+            timer::print("Padalijimo į dvi grupes laikas", timer::seconds(splitStart, splitEnd));
 
             const auto sortWeakStart = timer::now();
             sortStudents(weak, key);
             const auto sortWeakEnd = timer::now();
-            timer::print("Vargsiuku rusiavimo laikas", timer::seconds(sortWeakStart, sortWeakEnd));
+            timer::print("Vargšiukų rūšiavimo laikas", timer::seconds(sortWeakStart, sortWeakEnd));
 
             const auto sortStrongStart = timer::now();
             sortStudents(strong, key);
             const auto sortStrongEnd = timer::now();
-            timer::print("Kietiaku rusiavimo laikas", timer::seconds(sortStrongStart, sortStrongEnd));
+            timer::print("Kietiakų rūšiavimo laikas", timer::seconds(sortStrongStart, sortStrongEnd));
 
             const auto writeWeakStart = timer::now();
             std::ofstream outWeak("vargsiukai.txt");
             if (!outWeak) {
-                throw std::runtime_error("Nepavyko sukurti failo vargsiukai.txt");
+                throw std::runtime_error("Nepavyko sukūrti failo vargsiukai.txt");
             }
             if (!weak.empty()) {
                 printTable(outWeak, weak, maxVWeak, maxPWeak, 18);
             }
             const auto writeWeakEnd = timer::now();
-            timer::print("Vargsiuku irasymo i faila laikas", timer::seconds(writeWeakStart, writeWeakEnd));
+            timer::print("Vargšiukų įrašymo į failą laikas", timer::seconds(writeWeakStart, writeWeakEnd));
 
             const auto writeStrongStart = timer::now();
             std::ofstream outStrong("kietiakai.txt");
             if (!outStrong) {
-                throw std::runtime_error("Nepavyko sukurti failo kietiakai.txt");
+                throw std::runtime_error("Nepavyko sukūrti failo kietiakai.txt");
             }
             if (!strong.empty()) {
                 printTable(outStrong, strong, maxVStrong, maxPStrong, 18);
             }
             const auto writeStrongEnd = timer::now();
-            timer::print("Kietiaku irasymo i faila laikas", timer::seconds(writeStrongStart, writeStrongEnd));
+            timer::print("Kietiakų įrašymo į failą laikas", timer::seconds(writeStrongStart, writeStrongEnd));
 
             const auto totalEnd = timer::now();
 
-            std::cout << "\nRezultatai issaugoti:\n"
+            std::cout << "\nRezultatai išsaugoti:\n"
             << "  - kietiakai.txt (>= 5.0)\n"
             << "  - vargsiukai.txt (< 5.0)\n";
 
-            std::cout << "\nLaiku suvestine:\n";
+            std::cout << "\nLaikų suvestinė:\n";
             std::cout << "------------------------------------------------------------\n";
             if (fromFile) {
-                std::cout << "Saltinis failas: " << selectedFilename << "\n";
+                std::cout << "Šaltinis failas: " << selectedFilename << "\n";
             }
-            std::cout << "Studentu kiekis: " << students.size() << "\n";
-            std::cout << "Kietiaku kiekis: " << strong.size() << "\n";
-            std::cout << "Vargsiuku kiekis: " << weak.size() << "\n";
+            std::cout << "Studentų kiekis: " << students.size() << "\n";
+            std::cout << "Kietiakų kiekis: " << strong.size() << "\n";
+            std::cout << "Vargšiukų kiekis: " << weak.size() << "\n";
             timer::print("Visos programos veikimo laikas", timer::seconds(totalStart, totalEnd));
             std::cout << "------------------------------------------------------------\n";
 
             const char again = inp::readCharFromSet(
-                "\nGrizti i pagrindini meniu? (t/n) [t]: ", "tn", 't');
+                "\nGrįžti į pagrindinį meniu? (t/n) [t]: ", "tn", 't');
 
             if (again == 'n') {
                 std::cout << "\nPrograma baigia darba.\n";
