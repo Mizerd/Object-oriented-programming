@@ -27,13 +27,13 @@ void generateTestFiles(int ndCount) {
         std::ofstream out(filename);
 
         if (!out) {
-            std::cerr << "Nepavyko sukurti failo: " << filename << "\n";
+            std::cerr << "Nepavyko sukūrti failo: " << filename << "\n";
             continue;
         }
 
         out << std::left
         << std::setw(20) << "Vardas"
-        << std::setw(20) << "Pavarde";
+        << std::setw(20) << "Pavardė";
 
         for (int i = 1; i <= ndCount; ++i) {
             out << std::setw(6) << ("ND" + std::to_string(i));
@@ -44,7 +44,7 @@ void generateTestFiles(int ndCount) {
         for (int i = 1; i <= n; ++i) {
             out << std::left
             << std::setw(20) << ("Vardas" + std::to_string(i))
-            << std::setw(20) << ("Pavarde" + std::to_string(i));
+            << std::setw(20) << ("Pavardė" + std::to_string(i));
 
             for (int j = 0; j < ndCount; ++j) {
                 out << std::setw(6) << grade(gen);
@@ -59,15 +59,15 @@ void generateTestFiles(int ndCount) {
         const double secs = timer::seconds(start, end);
 
         std::cout << std::left
-        << "Sukurtas failas: "
+        << "Sukūrtas failas: "
         << std::setw(22) << filename
-        << " | irasu: " << std::setw(10) << n
+        << " | įrašų: " << std::setw(10) << n
         << " | laikas: " << std::fixed << std::setprecision(6)
         << secs << " s\n";
     }
 
     const auto totalEnd = timer::now();
     std::cout << "------------------------------------------------------------\n";
-    timer::print("Bendras failu generavimo laikas", timer::seconds(totalStart, totalEnd));
+    timer::print("Bendras failų generavimo laikas", timer::seconds(totalStart, totalEnd));
     std::cout << "------------------------------------------------------------\n";
 }
