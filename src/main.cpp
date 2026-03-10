@@ -4,6 +4,7 @@
 #include "menu.h"
 #include "sorting.h"
 #include "table.h"
+#include "timer.h"
 #include "types.h"
 #include "utf8.h"
 #include "fileGenerator.h"
@@ -133,13 +134,24 @@ int main() {
             std::size_t maxVCols = 0;
             std::size_t maxPCols = 0;
 
+            std::string selectedFilename;
+            bool fromFile = false;
+
+            const auto totalStart = timer::now();
+
             if (mode == 1) {
+                fromFile = true;
+
                 while (true) {
                     try {
-                        const std::string filename = chooseTxtFileFromDirectory();
+                        selectedFilename = chooseTxtFileFromDirectory();
+                        std::cout << "\nPasirinktas failas: " << selectedFilename << "\n";
 
-                        std::cout << "\nPasirinktas failas: " << filename << "\n";
-                        readStudentsFromFileVec(filename, students, maxVCols, maxPCols, weights);
+                        const auto readStart = timer::now();
+                        readStudentsFromFileVec(selectedFilename, students, maxVCols, maxPCols, weights);
+                        const auto readEnd = timer::now();
+
+                        timer::print("Failo nuskaitymo laikas", timer::seconds(readStart, readEnd));
                         break;
 
                     } catch (const std::exception& e) {
@@ -170,13 +182,16 @@ int main() {
             const int sortChoice = inp::readIntInRange("Pasirinkimas (1-4): ", 1, 4);
             const SortKey key = static_cast<SortKey>(sortChoice);
 
-            sortStudents(students, key);
-
             std::vector<StudentRec> strong;
             std::vector<StudentRec> weak;
 
+            strong.reserve(students.size());
+            weak.reserve(students.size());
+
             std::size_t maxVStrong = 0, maxPStrong = 0;
             std::size_t maxVWeak = 0, maxPWeak = 0;
+
+            const auto splitStart = timer::now();
 
             for (const auto& s : students) {
                 if (s.galVid >= 5.0) {
@@ -190,27 +205,57 @@ int main() {
                 }
             }
 
-            sortStudents(strong, key);
+            const auto splitEnd = timer::now();
+            timer::print("Padalijimo i dvi grupes laikas", timer::seconds(splitStart, splitEnd));
+
+            const auto sortWeakStart = timer::now();
             sortStudents(weak, key);
+            const auto sortWeakEnd = timer::now();
+            timer::print("Vargsiuku rusiavimo laikas", timer::seconds(sortWeakStart, sortWeakEnd));
 
-            std::ofstream outStrong("kietiakai.txt");
+            const auto sortStrongStart = timer::now();
+            sortStudents(strong, key);
+            const auto sortStrongEnd = timer::now();
+            timer::print("Kietiaku rusiavimo laikas", timer::seconds(sortStrongStart, sortStrongEnd));
+
+            const auto writeWeakStart = timer::now();
             std::ofstream outWeak("vargsiukai.txt");
-
-            if (!outStrong || !outWeak) {
-                throw std::runtime_error("Nepavyko sukurti rezultatu failu.");
+            if (!outWeak) {
+                throw std::runtime_error("Nepavyko sukurti failo vargsiukai.txt");
             }
-
-            if (!strong.empty()) {
-                printTable(outStrong, strong, maxVStrong, maxPStrong, 18);
-            }
-
             if (!weak.empty()) {
                 printTable(outWeak, weak, maxVWeak, maxPWeak, 18);
             }
+            const auto writeWeakEnd = timer::now();
+            timer::print("Vargsiuku irasymo i faila laikas", timer::seconds(writeWeakStart, writeWeakEnd));
+
+            const auto writeStrongStart = timer::now();
+            std::ofstream outStrong("kietiakai.txt");
+            if (!outStrong) {
+                throw std::runtime_error("Nepavyko sukurti failo kietiakai.txt");
+            }
+            if (!strong.empty()) {
+                printTable(outStrong, strong, maxVStrong, maxPStrong, 18);
+            }
+            const auto writeStrongEnd = timer::now();
+            timer::print("Kietiaku irasymo i faila laikas", timer::seconds(writeStrongStart, writeStrongEnd));
+
+            const auto totalEnd = timer::now();
 
             std::cout << "\nRezultatai issaugoti:\n"
             << "  - kietiakai.txt (>= 5.0)\n"
             << "  - vargsiukai.txt (< 5.0)\n";
+
+            std::cout << "\nLaiku suvestine:\n";
+            std::cout << "------------------------------------------------------------\n";
+            if (fromFile) {
+                std::cout << "Saltinis failas: " << selectedFilename << "\n";
+            }
+            std::cout << "Studentu kiekis: " << students.size() << "\n";
+            std::cout << "Kietiaku kiekis: " << strong.size() << "\n";
+            std::cout << "Vargsiuku kiekis: " << weak.size() << "\n";
+            timer::print("Visos programos veikimo laikas", timer::seconds(totalStart, totalEnd));
+            std::cout << "------------------------------------------------------------\n";
 
             const char again = inp::readCharFromSet(
                 "\nGrizti i pagrindini meniu? (t/n) [t]: ", "tn", 't');
