@@ -10,7 +10,8 @@ SRC := \
 	src/fileio.cpp \
 	src/sorting.cpp \
 	src/table.cpp \
-	src/menu.cpp
+	src/menu.cpp \
+	src/fileGenerator.cpp
 
 TARGET := vector
 
