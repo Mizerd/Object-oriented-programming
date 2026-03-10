@@ -1,4 +1,5 @@
 #include "fileGenerator.h"
+#include "timer.h"
 
 #include <fstream>
 #include <iomanip>
@@ -15,9 +16,13 @@ void generateTestFiles(int ndCount) {
 
     std::cout << "\nGeneruojami testiniai failai\n";
     std::cout << "ND skaicius kiekvienam studentui: " << ndCount << "\n";
-    std::cout << "---------------------------------------------\n";
+    std::cout << "------------------------------------------------------------\n";
+
+    const auto totalStart = timer::now();
 
     for (int n : sizes) {
+        const auto start = timer::now();
+
         const std::string filename = "studentai" + std::to_string(n) + ".txt";
         std::ofstream out(filename);
 
@@ -48,11 +53,21 @@ void generateTestFiles(int ndCount) {
             out << std::setw(6) << grade(gen) << "\n";
         }
 
+        out.close();
+
+        const auto end = timer::now();
+        const double secs = timer::seconds(start, end);
+
         std::cout << std::left
         << "Sukurtas failas: "
         << std::setw(22) << filename
-        << " | irasu: " << n << "\n";
+        << " | irasu: " << std::setw(10) << n
+        << " | laikas: " << std::fixed << std::setprecision(6)
+        << secs << " s\n";
     }
 
-    std::cout << "---------------------------------------------\n";
+    const auto totalEnd = timer::now();
+    std::cout << "------------------------------------------------------------\n";
+    timer::print("Bendras failu generavimo laikas", timer::seconds(totalStart, totalEnd));
+    std::cout << "------------------------------------------------------------\n";
 }
