@@ -215,6 +215,11 @@ Testuotas failas:
 studentai10000000.txt
 ```
 
+Nuoroda į failus, nes max Github priimamo failo dydis yra 100 MB:
+```
+https://drive.proton.me/urls/NGTEYQY8FR#gHv5pii4BrHt
+```
+
 | Veiksmas | Vidutinis laikas |
 |------|------|
 | Failo nuskaitymas | ~6.88 s |
