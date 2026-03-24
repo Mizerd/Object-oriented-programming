@@ -1,7 +1,7 @@
 #include "splitting.h"
 
 #include <algorithm>
-#include <iterator>
+#include <utility>
 
 bool isWeakStudent(const StudentRec& s) {
     return s.galVid < 5.0;
@@ -12,9 +12,9 @@ const char* splitStrategyLabel(SplitStrategy strategy) {
         case SplitStrategy::Strategy1:
             return "1 strategija (du nauji konteineriai)";
         case SplitStrategy::Strategy2:
-            return "2 strategija (vienas naujas konteineris + remove_if)";
+            return "2 strategija (vienas naujas konteineris + remove_if + copy)";
         case SplitStrategy::Strategy3:
-            return "3 strategija (partition + move)";
+            return "3 strategija (vienas naujas konteineris + remove_if + move)";
     }
     return "nezinoma strategija";
 }
@@ -61,17 +61,16 @@ void splitStudentsStrategy3(StudentContainer& students,
     weak.clear();
     reserveIfSupported(weak, students.size());
 
-    auto boundary = std::partition(
+    auto newEnd = std::remove_if(
         students.begin(),
         students.end(),
-        [](const StudentRec& s) {
-            return !isWeakStudent(s);
+        [&](StudentRec& s) {
+            if (isWeakStudent(s)) {
+                weak.push_back(std::move(s));
+                return true;
+            }
+            return false;
         });
 
-    weak.insert(
-        weak.end(),
-        std::make_move_iterator(boundary),
-        std::make_move_iterator(students.end()));
-
-    students.erase(boundary, students.end());
+    students.erase(newEnd, students.end());
 }
