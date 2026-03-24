@@ -147,7 +147,7 @@ Trečia strategija yra optimizuota 2 strategijos versija, paremta tuo pačiu pri
 - **Diskas:** NVMe SSD
 - **Grafika:** Intel Graphics (integrated)
 
-![Sistemos informacija](c0e7a4ba-2cc3-415f-ab12-bd8cc3b9944c.png)
+![Sistemos informacija](screenshots/system.png)
 
 ## Benchmark metodika
 
@@ -160,9 +160,9 @@ Trečia strategija yra optimizuota 2 strategijos versija, paremta tuo pačiu pri
   - `split`
 
 
-- [benchmark_vector.csv](benchmark_vector.csv)
-- [benchmark_list.csv](benchmark_list.csv)
-- [benchmark_deque.csv](benchmark_deque.csv)
+- [benchmark_vector.csv](results/benchmark_vector.csv)
+- [benchmark_list.csv](results/benchmark_list.csv)
+- [benchmark_deque.csv](results/benchmark_deque.csv)
 
 ## Strategijų palyginimas
 
@@ -170,48 +170,76 @@ Trečia strategija yra optimizuota 2 strategijos versija, paremta tuo pačiu pri
 
 | Failas | 1 strategija | 2 strategija | 3 strategija |
 |---|---:|---:|---:|
+| 1 000 | 0.001349 s | 0.000729 s | 0.000583 s |
+| 10 000 | 0.006900 s | 0.006910 s | 0.006872 s |
+| 100 000 | 0.078067 s | 0.076925 s | 0.076867 s |
+| 1 000 000 | 0.833091 s | 0.857578 s | 0.881917 s |
 | 10 000 000 | 9.186616 s | 9.063602 s | 9.571146 s |
-
-**Greičiausia strategija:** **2 strategija**
 
 ### `std::list`
 
 | Failas | 1 strategija | 2 strategija | 3 strategija |
 |---|---:|---:|---:|
-| 10 000 000 | 16.480180 s | 15.361767 s | 15.947850 s |
-
-**Greičiausia strategija:** **2 strategija**
+| 1 000 | 0.001219 s | 0.000618 s | 0.000545 s |
+| 10 000 | 0.006112 s | 0.006368 s | 0.005994 s |
+| 100 000 | 0.072899 s | 0.070519 s | 0.073526 s |
+| 1 000 000 | 1.222769 s | 1.232911 s | 1.247752 s |
+| 10 000 000 | 16.543046 s | 15.299979 s | 15.439177 s |
 
 ### `std::deque`
 
 | Failas | 1 strategija | 2 strategija | 3 strategija |
 |---|---:|---:|---:|
-| 10 000 000 | 9.154252 s | 8.897489 s | 9.259165 s |
-
-**Greičiausia strategija:** **2 strategija**
+| 1 000 | 0.001302 s | 0.000738 s | 0.000595 s |
+| 10 000 | 0.007000 s | 0.006903 s | 0.006755 s |
+| 100 000 | 0.079334 s | 0.079797 s | 0.077361 s |
+| 1 000 000 | 0.884773 s | 0.826518 s | 0.811390 s |
+| 10 000 000 | 9.056366 s | 8.771143 s | 8.783073 s |
 
 ## Konteinerių palyginimas
 
-Žemiau lyginami konteineriai naudojant kiekvieno konteinerio greičiausią strategiją.
+| Failas | `vector` | `list` | `deque` |
+|---|---:|---:|---:|
+| 1 000 | 0.000583 s | 0.000545 s | 0.000595 s |
+| 10 000 | 0.006872 s | 0.005994 s | 0.006755 s |
+| 100 000 | 0.076867 s | 0.070519 s | 0.077361 s |
+| 1 000 000 | 0.833091 s | 1.222769 s | 0.811390 s |
+| 10 000 000 | 9.063602 s | 15.299979 s | 8.771143 s |
 
-- `vector` → **2 strategija**
-- `list` → **2 strategija**
-- `deque` → **2 strategija**
+## Fazės pagal greičiausią strategiją
 
-| Failas | Vector total | List total | Deque total | Vector read | List read | Deque read | Vector sort | List sort | Deque sort | Vector split | List split | Deque split |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| 10 000 000 | 9.063602 s | 15.361767 s | 8.897489 s | 5.893578 s | 6.473022 s | 5.288783 s | 2.995026 s | 8.739139 s | 3.408395 s | 0.174998 s | 0.149606 s | 0.200311 s |
+| Failas | Konteineris | Read | Sort | Split | Total |
+|---|---|---:|---:|---:|---:|
+| 1 000 | `vector` | 0.000476 s | 0.000095 s | 0.000012 s | 0.000583 s |
+| 1 000 | `list` | 0.000473 s | 0.000064 s | 0.000008 s | 0.000545 s |
+| 1 000 | `deque` | 0.000476 s | 0.000111 s | 0.000007 s | 0.000595 s |
+| 10 000 | `vector` | 0.005201 s | 0.001552 s | 0.000120 s | 0.006872 s |
+| 10 000 | `list` | 0.004918 s | 0.000993 s | 0.000083 s | 0.005994 s |
+| 10 000 | `deque` | 0.004833 s | 0.001789 s | 0.000133 s | 0.006755 s |
+| 100 000 | `vector` | 0.054990 s | 0.020075 s | 0.001803 s | 0.076867 s |
+| 100 000 | `list` | 0.053860 s | 0.015315 s | 0.001343 s | 0.070519 s |
+| 100 000 | `deque` | 0.051457 s | 0.024090 s | 0.001815 s | 0.077361 s |
+| 1 000 000 | `vector` | 0.550995 s | 0.251998 s | 0.030097 s | 0.833091 s |
+| 1 000 000 | `list` | 0.646844 s | 0.456713 s | 0.119212 s | 1.222769 s |
+| 1 000 000 | `deque` | 0.505312 s | 0.286227 s | 0.019851 s | 0.811390 s |
+| 10 000 000 | `vector` | 5.893578 s | 2.995026 s | 0.174998 s | 9.063602 s |
+| 10 000 000 | `list` | 6.466378 s | 8.683610 s | 0.149992 s | 15.299979 s |
+| 10 000 000 | `deque` | 5.199077 s | 3.372588 s | 0.199478 s | 8.771143 s |
 
 
 ## Rezultatų aptarimas
 
-Iš pateiktų benchmark rezultatų matyti, kad:
-- **`std::vector`** išlieka labai stiprus bendro našumo požiūriu dėl greito nuskaitymo ir rūšiavimo.
-- **`std::list`** skirstymo fazėje gali būti labai greitas, tačiau bendrą laiką stipriai padidina rūšiavimo kaštas.
-- **`std::deque`** dažniausiai yra tarpinis variantas tarp `vector` ir `list`.
-- 1 strategija dažniausiai yra lėčiausia dėl duomenų dubliavimo į du naujus konteinerius.
-- 2 ir 3 strategijos naudoja mažiau papildomos atminties ir dažniausiai veikia greičiau.
-- Šiame benchmark rinkinyje 3 strategija kai kuriais atvejais pagerina 2 strategijos rezultatą, tačiau bendras laimėtojas priklauso nuo konkretaus konteinerio ir duomenų kiekio.
+Iš benchmark rezultatų matyti, kad **`std::vector`** ir **`std::deque`** bendro našumo požiūriu pasirodė geriausiai, o **`std::list`** didesniuose duomenų rinkiniuose atsiliko daugiausia dėl lėto rūšiavimo. Nors `list` kai kuriais atvejais turėjo labai greitą skirstymo fazę, bendras rezultatas vis tiek buvo blogesnis, nes rūšiavimo kaštas stipriai išaugo ties `1 000 000` ir ypač ties `10 000 000` įrašų.
+
+Pagal bendrą laiką mažesniuose rinkiniuose (`1 000`, `10 000`, `100 000`) geriausi rezultatai dažniausiai buvo labai artimi tarp visų trijų konteinerių, tačiau didėjant duomenų kiekiui pradėjo ryškėti skirtumai. Ties `1 000 000` ir `10 000 000` įrašų geriausius rezultatus parodė **`std::deque`**, o **`std::vector`** nuo jo atsiliko labai nedaug. Tai rodo, kad abu šie konteineriai yra tinkamiausi darbui su dideliais duomenų kiekiais.
+
+Strategijų palyginimas parodė, kad vieno universalaus laimėtojo visais atvejais nėra, tačiau **1 strategija** dažniau buvo lėtesnė, nes ji kuria du naujus konteinerius ir dubliuoja duomenis. **2 strategija** daugeliu atvejų davė labai gerą rezultatą, ypač su `list` ir `deque`, o **3 strategija** kai kuriais atvejais buvo greičiausia, ypač `vector` ir mažesniuose rinkiniuose. Vis dėlto skirtumas tarp 2 ir 3 strategijų dažnai buvo nedidelis, todėl praktikoje jų našumas yra panašus.
+
+Apibendrinant galima teigti, kad:
+- **`std::vector`** išliko labai stiprus ir stabilus pasirinkimas;
+- **`std::list`** nėra palankus variantas, kai svarbus bendras veikimo laikas ir reikia efektyvaus rūšiavimo;
+- **`std::deque`** parodė geriausią bendrą rezultatą didžiausiuose testuose;
+- efektyvesnės buvo tos strategijos, kurios mažino papildomą kopijavimą ir nereikalingą duomenų dubliavimą.
 
 ## Ekrano nuotraukos
 
