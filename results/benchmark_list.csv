@@ -1,0 +1,17 @@
+sep=;
+container;filename;repeats;sort_key;strategy;total;strong;weak;read_s;sort_s;split_s;total_s
+std::list;studentai1000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);1000;585;415;0.001043;0.000145;0.000031;0.001219
+std::list;studentai1000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);1000;585;415;0.000534;0.000073;0.000010;0.000618
+std::list;studentai1000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);1000;585;415;0.000473;0.000064;0.000008;0.000545
+std::list;studentai10000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);10000;5836;4164;0.004964;0.000995;0.000153;0.006112
+std::list;studentai10000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);10000;5836;4164;0.005222;0.001039;0.000107;0.006368
+std::list;studentai10000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);10000;5836;4164;0.004918;0.000993;0.000083;0.005994
+std::list;studentai100000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);100000;58717;41283;0.053919;0.015449;0.003531;0.072899
+std::list;studentai100000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);100000;58717;41283;0.053860;0.015315;0.001343;0.070519
+std::list;studentai100000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);100000;58717;41283;0.056172;0.016085;0.001269;0.073526
+std::list;studentai1000000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);1000000;586985;413015;0.646844;0.456713;0.119212;1.222769
+std::list;studentai1000000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);1000000;586985;413015;0.713616;0.502478;0.016818;1.232911
+std::list;studentai1000000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);1000000;586985;413015;0.723311;0.508169;0.016272;1.247752
+std::list;studentai10000000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);10000000;5865111;4134889;6.543960;8.746303;1.252783;16.543046
+std::list;studentai10000000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);10000000;5865111;4134889;6.466378;8.683610;0.149992;15.299979
+std::list;studentai10000000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);10000000;5865111;4134889;6.501934;8.793593;0.143650;15.439177
