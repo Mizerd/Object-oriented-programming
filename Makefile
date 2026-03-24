@@ -12,7 +12,8 @@ SRC := \
 	src/table.cpp \
 	src/menu.cpp \
 	src/fileGenerator.cpp \
-	src/splitting.cpp
+	src/splitting.cpp \
+	src/benchmark.cpp
 
 TARGET := vector
 
