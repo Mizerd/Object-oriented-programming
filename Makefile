@@ -23,5 +23,9 @@ vector: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_VECTOR
 vector: $(SRC)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
 
+list: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_LIST
+list: $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
+
 clean:
 	rm -f $(TARGET)
