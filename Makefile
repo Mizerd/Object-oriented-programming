@@ -19,8 +19,9 @@ TARGET := vector
 
 all: $(TARGET)
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $(TARGET)
+vector: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_VECTOR
+vector: $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
 
 clean:
 	rm -f $(TARGET)
