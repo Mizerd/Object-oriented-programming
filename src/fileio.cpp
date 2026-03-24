@@ -13,12 +13,29 @@ namespace {
 
 void validateGradeRange(int x, const std::string& what) {
     if (x < 1 || x > 10) {
-        throw std::runtime_error("Neteisingas pažymys (" + std::to_string(x) + ") lauke: " + what +
-                                 ". Leistinas intervalas: 1..10.");
+        throw std::runtime_error(
+            "Neteisingas pazymys (" + std::to_string(x) + ") lauke: " + what +
+            ". Leistinas intervalas: 1..10.");
     }
 }
 
-std::size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
+std::string stripUtf8Bom(const std::string& s) {
+    if (s.size() >= 3 &&
+        static_cast<unsigned char>(s[0]) == 0xEF &&
+        static_cast<unsigned char>(s[1]) == 0xBB &&
+        static_cast<unsigned char>(s[2]) == 0xBF) {
+        return s.substr(3);
+    }
+    return s;
+}
+
+bool isAcceptedSurnameHeader(const std::string& token) {
+    return token == "Pavarde" || token == "Pavardė";
+}
+
+std::size_t detectNdCountFromHeaderLine(const std::string& rawHeaderLine) {
+    const std::string headerLine = stripUtf8Bom(rawHeaderLine);
+
     std::istringstream hs(headerLine);
     std::vector<std::string> tokens;
     std::string tok;
@@ -28,15 +45,18 @@ std::size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
     }
 
     if (tokens.size() < 3) {
-        throw std::runtime_error("Neteisinga failo antraštė: per mažai stulpelių.");
+        throw std::runtime_error("Neteisinga failo antraste: per mazai stulpeliu.");
     }
 
-    if (tokens.front() != "Vardas" || tokens[1] != "Pavardė") {
-        throw std::runtime_error("Neteisinga failo antraštė: pirmi stulpeliai turi būti 'Vardas Pavardė'.");
+    if (tokens.front() != "Vardas" || !isAcceptedSurnameHeader(tokens[1])) {
+        throw std::runtime_error(
+            "Neteisinga failo antraste: pirmi stulpeliai turi buti "
+            "'Vardas Pavarde' arba 'Vardas Pavardė'.");
     }
 
     if (tokens.back() != "Egz") {
-        throw std::runtime_error("Neteisinga failo antraštė: paskutinis stulpelis turi būti 'Egz'.");
+        throw std::runtime_error(
+            "Neteisinga failo antraste: paskutinis stulpelis turi buti 'Egz'.");
     }
 
     return tokens.size() - 3;
@@ -56,7 +76,7 @@ void readStudentsFromFile(const std::string& filename,
 
     std::string headerLine;
     if (!std::getline(in, headerLine)) {
-        throw std::runtime_error("Failas tuščias arba nepavyko nuskaityti antraštės: " + filename);
+        throw std::runtime_error("Failas tuscias arba nepavyko nuskaityti antrastes: " + filename);
     }
 
     const std::size_t ndCount = detectNdCountFromHeaderLine(headerLine);
@@ -75,22 +95,27 @@ void readStudentsFromFile(const std::string& filename,
         for (std::size_t i = 0; i < ndCount; ++i) {
             int g;
             if (!(in >> g)) {
-                throw std::runtime_error("Neteisingas failo formatas: trūksta ND reikšmių eilutėje " +
-                                         std::to_string(lineNo) + ".");
+                throw std::runtime_error(
+                    "Neteisingas failo formatas: truksta ND reiksmiu eiluteje " +
+                    std::to_string(lineNo) + ".");
             }
-            validateGradeRange(g, "ND, eilutė " + std::to_string(lineNo));
+            validateGradeRange(g, "ND, eilute " + std::to_string(lineNo));
             nd[i] = g;
             sum += g;
         }
 
         int egz;
         if (!(in >> egz)) {
-            throw std::runtime_error("Neteisingas failo formatas: trūksta egzamino pažymio eilutėje " +
-                                     std::to_string(lineNo) + ".");
+            throw std::runtime_error(
+                "Neteisingas failo formatas: truksta egzamino pazymio eiluteje " +
+                std::to_string(lineNo) + ".");
         }
-        validateGradeRange(egz, "egzaminas, eilutė " + std::to_string(lineNo));
+        validateGradeRange(egz, "egzaminas, eilute " + std::to_string(lineNo));
 
-        const double avg = ndCount ? (static_cast<double>(sum) / static_cast<double>(ndCount)) : 0.0;
+        const double avg = ndCount
+            ? (static_cast<double>(sum) / static_cast<double>(ndCount))
+            : 0.0;
+
         tmp = nd;
         std::sort(tmp.begin(), tmp.end());
         const double med = grade::medianFromSorted(tmp);
@@ -105,6 +130,7 @@ void readStudentsFromFile(const std::string& filename,
     }
 
     if (out.empty()) {
-        throw std::runtime_error("Faile nerasta studentų įrašų (gal neteisingas formatas?): " + filename);
+        throw std::runtime_error(
+            "Faile nerasta studentu irasu (gal neteisingas formatas?): " + filename);
     }
 }
