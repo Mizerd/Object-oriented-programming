@@ -132,7 +132,16 @@ Naudojamas vienas naujas konteineris `vargšiukai`, o silpnesni studentai pašal
 **Minusas:** šalinimo logika yra jautri konteinerio tipui.
 
 ### 3 strategija
-Trečia strategija yra optimizuota 2 strategijos versija, paremta tuo pačiu principu, bet naudojanti efektyvesnius STL veiksmus.
+Trečia strategija yra optimizuota 2 strategijos versija, paremta tuo pačiu principu: sukuriamas tik vienas naujas konteineris `vargšiukai`, o bendrame konteineryje po skirstymo lieka tik `kietiakai`.
+
+Skirtumas tas, kad vietoje paprasto duomenų kopijavimo čia naudojami efektyvesni STL veiksmai. Skirstymas atliekamas per vieną bendrą perėjimą per konteinerį, o studentai, kurie patenka į `vargšiukų` grupę, yra perkeliami į naują konteinerį naudojant `move`. Po to iš pradinio konteinerio jie pašalinami vienu bendru veiksmu. Tokiu būdu sumažinamas nereikalingas duomenų kopijavimas ir išvengiama brangių pasikartojančių trynimo operacijų.
+
+Pagrindinė šios strategijos idėja:
+- naudoti tik **vieną naują konteinerį**;
+- silpnesnius studentus į jį **perkelti**, o ne kopijuoti;
+- pradinį konteinerį išvalyti nuo jau atrinktų elementų **vienu bendru žingsniu**.
+
+Toks sprendimas leidžia išlaikyti tą pačią bendrą logiką visiems konteineriams (`vector`, `list`, `deque`), bet kartu sumažina papildomų operacijų kainą. Praktikoje ši strategija dažnai duoda labai artimą arba geresnį rezultatą nei 2 strategija, ypač kai duomenų kiekis yra didelis.
 
 **Tikslas:** sumažinti skirstymo kainą ir išlaikyti tą pačią bendrą logiką visiems konteineriams.
 
