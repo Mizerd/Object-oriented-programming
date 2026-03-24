@@ -1,5 +1,6 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -O3 -g -Wall -Wextra -pedantic -march=native
+
+COMMON_FLAGS := -std=c++17 -O3 -g -Wall -Wextra -pedantic -march=native
 INCLUDES := -Iinclude
 
 SRC := \
@@ -15,9 +16,9 @@ SRC := \
 	src/splitting.cpp \
 	src/benchmark.cpp
 
-TARGET := vector
+TARGETS := vector list deque
 
-all: $(TARGET)
+all: $(TARGETS)
 
 vector: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_VECTOR
 vector: $(SRC)
@@ -32,4 +33,6 @@ deque: $(SRC)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGETS) benchmark_*.csv kietiakai.txt vargsiukai.txt
+
+.PHONY: all clean
