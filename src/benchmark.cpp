@@ -122,10 +122,11 @@ void printBenchmarkRow(const BenchmarkRow& row) {
               << "Strategija: " << splitStrategyLabel(row.strategy) << "\n"
               << "Studentų kiekis: " << row.total << "\n"
               << "Kietiakai: " << row.strong << "\n"
-              << "Vargšiukai: " << row.weak << "\n";
+              << "Vargsiukai: " << row.weak << "\n";
     timer::print("Failo nuskaitymo vidurkis", row.readSecs);
     timer::print("Rikiavimo vidurkis", row.sortSecs);
     timer::print("Skirstymo vidurkis", row.splitSecs);
+    timer::print("Bendras vidurkis", row.readSecs + row.sortSecs + row.splitSecs);
 }
 
 void appendBenchmarkCsv(const std::string& csvFilename,
@@ -139,19 +140,23 @@ void appendBenchmarkCsv(const std::string& csvFilename,
     }
 
     if (needHeader) {
-        out << "container,filename,repeats,sort_key,strategy,total,strong,weak,read_s,sort_s,split_s\n";
+        out << "sep=;\n";
+        out << "container;filename;repeats;sort_key;strategy;total;strong;weak;read_s;sort_s;split_s;total_s\n";
     }
 
-    out << kStudentContainerName << ','
-        << row.filename << ','
-        << repeats << ','
-        << sortKeyLabel(row.sortKey) << ','
-        << splitStrategyLabel(row.strategy) << ','
-        << row.total << ','
-        << row.strong << ','
-        << row.weak << ','
+    const double totalSecs = row.readSecs + row.sortSecs + row.splitSecs;
+
+    out << kStudentContainerName << ';'
+        << row.filename << ';'
+        << repeats << ';'
+        << sortKeyLabel(row.sortKey) << ';'
+        << splitStrategyLabel(row.strategy) << ';'
+        << row.total << ';'
+        << row.strong << ';'
+        << row.weak << ';'
         << std::fixed << std::setprecision(6)
-        << row.readSecs << ','
-        << row.sortSecs << ','
-        << row.splitSecs << '\n';
+        << row.readSecs << ';'
+        << row.sortSecs << ';'
+        << row.splitSecs << ';'
+        << totalSecs << '\n';
 }
