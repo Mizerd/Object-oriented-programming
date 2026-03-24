@@ -55,9 +55,6 @@ Programa leidžia:
 │   ├── table.cpp
 │   └── utf8.cpp
 ├── Makefile
-├── benchmark_vector.csv
-├── benchmark_list.csv
-├── benchmark_deque.csv
 └── README.md
 ```
 
