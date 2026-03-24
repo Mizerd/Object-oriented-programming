@@ -1,8 +1,40 @@
 #include "sorting.h"
 
 #include <algorithm>
+#include <deque>
+#include <list>
+#include <vector>
 
-void sortStudents(std::vector<StudentRec>& students, SortKey key) {
+namespace {
+
+template <typename Compare>
+void sortImpl(std::vector<StudentRec>& students, Compare comp) {
+    std::sort(students.begin(), students.end(), comp);
+}
+
+template <typename Compare>
+void sortImpl(std::deque<StudentRec>& students, Compare comp) {
+    std::sort(students.begin(), students.end(), comp);
+}
+
+template <typename Compare>
+void sortImpl(std::list<StudentRec>& students, Compare comp) {
+    students.sort(comp);
+}
+
+} // namespace
+
+const char* sortKeyLabel(SortKey key) {
+    switch (key) {
+        case SortKey::ByName:     return "vardas";
+        case SortKey::BySurname:  return "pavardė";
+        case SortKey::ByFinalAvg: return "galutinis_vidurkis";
+        case SortKey::ByFinalMed: return "galutinė_mediana";
+    }
+    return "nežinomas";
+}
+
+void sortStudents(StudentContainer& students, SortKey key) {
     auto byName = [](const StudentRec& a, const StudentRec& b) {
         if (a.vardas != b.vardas) return a.vardas < b.vardas;
         if (a.pavarde != b.pavarde) return a.pavarde < b.pavarde;
@@ -28,9 +60,9 @@ void sortStudents(std::vector<StudentRec>& students, SortKey key) {
     };
 
     switch (key) {
-        case SortKey::ByName:     std::sort(students.begin(), students.end(), byName);     break;
-        case SortKey::BySurname:  std::sort(students.begin(), students.end(), bySurname);  break;
-        case SortKey::ByFinalAvg: std::sort(students.begin(), students.end(), byFinalAvg); break;
-        case SortKey::ByFinalMed: std::sort(students.begin(), students.end(), byFinalMed); break;
+        case SortKey::ByName:     sortImpl(students, byName);     break;
+        case SortKey::BySurname:  sortImpl(students, bySurname);  break;
+        case SortKey::ByFinalAvg: sortImpl(students, byFinalAvg); break;
+        case SortKey::ByFinalMed: sortImpl(students, byFinalMed); break;
     }
 }
