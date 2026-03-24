@@ -1,89 +1,34 @@
-# Studentų galutinio balo skaičiuoklė (C++17) – v0.4
+# Studentų galutinio balo skaičiuoklė – v1.0
 
-## Vykdomoji santrauka
+## Trumpai apie projektą
 
-**v0.4** – C++17 konsolinė programa, kuri:
+Tai yra v1.0 projekto versija, kuri pratęsia v0.4 realizaciją ir pritaiko ją konteinerių tyrimui su trimis STL konteineriais:
 
-- generuoja didelius studentų duomenų failus
-- nuskaito studentų duomenis iš failo
-- apskaičiuoja galutinį pažymį
-- padalina studentus į dvi kategorijas
-- surūšiuoja rezultatus
-- įrašo rezultatus į atskirus failus
-- matuoja programos veikimo laiką
+- `std::vector`
+- `std::list`
+- `std::deque`
 
----
+Programa leidžia:
+- nuskaityti studentų duomenis iš failo,
+- apskaičiuoti galutinį balą pagal vidurkį arba medianą,
+- surūšiuoti studentus,
+- padalinti juos į `kietiakai` ir `vargšiukai`,
+- atlikti benchmark tyrimą, matuojant tik `read + sort + split`.
 
-# Projekto paskirtis ir funkcijos
+## Kas įgyvendinta v1.0
 
-Programa skirta apdoroti studentų pažymius ir apskaičiuoti galutinį balą pagal formulę.
+- vienas projekto kodas kompiliuojamas su trimis konteinerių tipais;
+- realizuotos 3 skirstymo strategijos;
+- benchmark režimas matuoja tik užduotyje reikalaujamas fazes;
+- benchmark rezultatai eksportuojami į CSV failus;
+- palaikomas darbas su dideliais failais, įskaitant 10 000 000 įrašų.
 
-### Pagal vidurkį
-
-```
-Galutinis = 0.4 * vidurkis(ND) + 0.6 * egzaminas
-```
-
-### Pagal medianą
-
-```
-Galutinis = 0.4 * mediana(ND) + 0.6 * egzaminas
-```
-
----
-
-# Įgyvendintos funkcijos
-
-- Nuskaitymas iš failo į `std::vector<Student>`
-- Studentų failų generatorius
-- Studentų padalinimas į dvi kategorijas
-- Studentų rikiavimas
-- Rezultatų įrašymas į failus
-- Programos veikimo laikų matavimas
-- Automatinis `.txt` failų aptikimas kataloge
-- Patogus vartotojo meniu
-
----
-
-# Studentų kategorijos
-
-## Vargšiukai
-
-Studentai, kurių galutinis balas:
-
-```
-< 5.0
-```
-
-Rezultatai įrašomi į failą:
-
-```
-vargsiukai.txt
-```
-
----
-
-## Kietiakai
-
-Studentai, kurių galutinis balas:
-
-```
->= 5.0
-```
-
-Rezultatai įrašomi į failą:
-
-```
-kietiakai.txt
-```
-
----
-
-# Projekto struktūra
+## Projekto struktūra
 
 ```text
 .
 ├── include/
+│   ├── benchmark.h
 │   ├── constants.h
 │   ├── fileGenerator.h
 │   ├── fileio.h
@@ -91,40 +36,43 @@ kietiakai.txt
 │   ├── input.h
 │   ├── menu.h
 │   ├── sorting.h
+│   ├── splitting.h
+│   ├── student_container.h
 │   ├── table.h
 │   ├── timer.h
 │   ├── types.h
 │   └── utf8.h
-│
 ├── src/
-│   ├── main.cpp
+│   ├── benchmark.cpp
 │   ├── fileGenerator.cpp
 │   ├── fileio.cpp
 │   ├── grades.cpp
 │   ├── input.cpp
+│   ├── main.cpp
 │   ├── menu.cpp
 │   ├── sorting.cpp
+│   ├── splitting.cpp
 │   ├── table.cpp
 │   └── utf8.cpp
-│
 ├── Makefile
+├── benchmark_vector.csv
+├── benchmark_list.csv
+├── benchmark_deque.csv
 └── README.md
 ```
 
----
-
-# Kompiliavimas
-
-## Naudojant Makefile
+## Kompiliavimas
 
 ```bash
 make
 ```
 
-Programa paleidžiama:
+Sugeneruojami 3 vykdomieji failai:
 
 ```bash
 ./vector
+./list
+./deque
 ```
 
 Išvalymas:
@@ -133,139 +81,173 @@ Išvalymas:
 make clean
 ```
 
----
+## Paleidimas
 
-# Programos meniu
+### Įprastas režimas
 
-Programa pateikia vartotojui tokį meniu:
+Paleidus vieną iš vykdomųjų failų galima:
+- nuskaityti studentus iš failo,
+- įvesti duomenis ranka / generuoti per v0.1 meniu,
+- generuoti testinius failus,
+- išsaugoti `kietiakai.txt` ir `vargsiukai.txt`.
 
-```
-Darbo rėžimas:
-1 - Nuskaityti studentus iš failo
-2 - Įvesti / generuoti (v0.1 meniu)
-3 - Generuoti studentų failus
-4 - Baigti darbą
-```
+### Benchmark režimas
 
----
+Meniu punktas:
 
-# Testinių failų generavimas
-
-![Benchmark 1](screenshots/V0.4_benchmark1.png)
-
-Programa generuoja 5 skirtingų dydžių failus.
-
-| Failas | Įrašų skaičius |
-|------|------|
-| studentai1000.txt | 1 000 |
-| studentai10000.txt | 10 000 |
-| studentai100000.txt | 100 000 |
-| studentai1000000.txt | 1 000 000 |
-| studentai10000000.txt | 10 000 000 |
-
-Vardai generuojami automatiškai:
-
-```
-Vardas1 Pavarde1
-Vardas2 Pavarde2
+```text
+4 - Benchmark / tyrimas (tik read + sort + split)
 ```
 
----
+Šis režimas nerašo rezultatų į `kietiakai.txt` / `vargsiukai.txt`, o matuoja tik:
+- duomenų nuskaitymą,
+- bendro konteinerio rūšiavimą,
+- studentų skirstymą į dvi grupes.
 
-# Spartos analizė
+## Testavimo duomenys
 
-Programa matuoja laiką šioms operacijoms:
+Benchmark testai atlikti su anksčiau sugeneruotais failais, kad visi konteineriai ir strategijos būtų lyginami vienodomis sąlygomis.
 
-- failo generavimui
-- failo nuskaitymui
-- studentų padalinimui
-- studentų rūšiavimui
-- rezultatų įrašymui į failus
-- visos programos veikimo laikui
+Naudotų failų rinkinys:
+- `studentai1000.txt`
+- `studentai10000.txt`
+- `studentai100000.txt`
+- `studentai1000000.txt`
+- `studentai10000000.txt`
 
----
+Šių failų atsisiuntimo nuoroda:
+- https://drive.proton.me/urls/NGTEYQY8FR#gHv5pii4BrHt
 
-# Failų generavimo testų rezultatai
+## Skirstymo strategijos
 
-Vidurkiai iš 10 testų.
+### 1 strategija
+Bendras studentų konteineris paliekamas nepakeistas, o duomenys kopijuojami į du naujus konteinerius:
+- `kietiakai`
+- `vargšiukai`
 
-| Failas | Įrašai | Vidutinis generavimo laikas |
-|------|------|------|
-| studentai1000 | 1000 | ~0.0029 s |
-| studentai10000 | 10000 | ~0.017 s |
-| studentai100000 | 100000 | ~0.11 s |
-| studentai1000000 | 1000000 | ~0.44 s |
-| studentai10000000 | 10000000 | ~3.87 s |
+**Pliusas:** paprasta ir aiški realizacija.  
+**Minusas:** didelės papildomos atminties sąnaudos.
 
-Bendras vidutinis generavimo laikas:
+### 2 strategija
+Naudojamas vienas naujas konteineris `vargšiukai`, o silpnesni studentai pašalinami iš bendro konteinerio.
 
-```
-~4.45 s
-```
+**Pliusas:** mažesnės papildomos atminties sąnaudos.  
+**Minusas:** šalinimo logika yra jautri konteinerio tipui.
 
----
+### 3 strategija
+Trečia strategija yra optimizuota 2 strategijos versija, paremta tuo pačiu principu, bet naudojanti efektyvesnius STL veiksmus.
 
-# Duomenų apdorojimo rezultatai (10M įrašų)
+**Tikslas:** sumažinti skirstymo kainą ir išlaikyti tą pačią bendrą logiką visiems konteineriams.
 
-![Benchmark 2](screenshots/V0.4_benchmark2.png)
+## Testavimo sistema
 
-Testuotas failas:
+- **OS:** Fedora Linux 43, KDE Plasma Desktop Edition
+- **CPU:** Intel Core Ultra 5 228V
+- **RAM:** 32 GiB RAM (30.7 GiB usable)
+- **Diskas:** NVMe SSD
+- **Grafika:** Intel Graphics (integrated)
 
-```
-studentai10000000.txt
-```
+![Sistemos informacija](c0e7a4ba-2cc3-415f-ab12-bd8cc3b9944c.png)
 
-Nuoroda į failus, nes max Github priimamo failo dydis yra 100 MB:
-```
-https://drive.proton.me/urls/NGTEYQY8FR#gHv5pii4BrHt
-```
+## Benchmark metodika
 
-| Veiksmas | Vidutinis laikas |
-|------|------|
-| Failo nuskaitymas | ~6.88 s |
-| Studentų padalinimas | ~1.69 s |
-| Vargšiukų rūšiavimas | ~1.19 s |
-| Kietiakų rūšiavimas | ~1.70 s |
-| Vargšiukų įrašymas | ~2.81 s |
-| Kietiakų įrašymas | ~4.06 s |
-| Visos programos laikas | ~21.58 s |
+- Matuotas rikiavimas pagal `galutinis_vidurkis`
+- Kiekvienas testas kartotas **20 kartų**
+- Rezultatuose pateikiamas **vidurkis**
+- Matuotos tik šios fazės:
+  - `read`
+  - `sort`
+  - `split`
 
-Studentų pasiskirstymas:
 
-| Grupė | Kiekis |
-|------|------|
-| Kietiakai | 5 865 111 |
-| Vargšiukai | 4 134 889 |
+- [benchmark_vector.csv](benchmark_vector.csv)
+- [benchmark_list.csv](benchmark_list.csv)
+- [benchmark_deque.csv](benchmark_deque.csv)
 
----
+## Strategijų palyginimas
 
-# Išvados
+### `std::vector`
 
-Programa pilnai įgyvendina **v0.4 reikalavimus**:
+| Failas | 1 strategija | 2 strategija | 3 strategija |
+|---|---:|---:|---:|
+| 10 000 000 | 9.186616 s | 9.063602 s | 9.571146 s |
 
-- generuoja testinius failus
-- padalina studentus į dvi kategorijas
-- rūšiuoja duomenis
-- įrašo rezultatus į failus
-- matuoja veikimo laiką
-- stabiliai veikia su **10 milijonų įrašų**
+**Greičiausia strategija:** **2 strategija**
 
-Didžiausią laiko dalį sudaro:
+### `std::list`
 
-- failų nuskaitymas
-- rezultatų įrašymas į failus
+| Failas | 1 strategija | 2 strategija | 3 strategija |
+|---|---:|---:|---:|
+| 10 000 000 | 16.480180 s | 15.361767 s | 15.947850 s |
 
-Tai yra normalu, nes **I/O operacijos yra lėčiausios**.
+**Greičiausia strategija:** **2 strategija**
 
----
+### `std::deque`
 
-# Versijų istorija
+| Failas | 1 strategija | 2 strategija | 3 strategija |
+|---|---:|---:|---:|
+| 10 000 000 | 9.154252 s | 8.897489 s | 9.259165 s |
 
-| Versija | Aprašymas |
-|------|------|
-| v0.1 | Pradinė studentų skaičiavimo programa |
-| v0.2 | Failų nuskaitymas |
-| v0.3 | Projekto refaktoringas + try/catch |
-| v0.4 | Failų generatorius + spartos analizė + studentų kategorijos |
+**Greičiausia strategija:** **2 strategija**
 
----
+## Konteinerių palyginimas
+
+Žemiau lyginami konteineriai naudojant kiekvieno konteinerio greičiausią strategiją.
+
+- `vector` → **2 strategija**
+- `list` → **2 strategija**
+- `deque` → **2 strategija**
+
+| Failas | Vector total | List total | Deque total | Vector read | List read | Deque read | Vector sort | List sort | Deque sort | Vector split | List split | Deque split |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 10 000 000 | 9.063602 s | 15.361767 s | 8.897489 s | 5.893578 s | 6.473022 s | 5.288783 s | 2.995026 s | 8.739139 s | 3.408395 s | 0.174998 s | 0.149606 s | 0.200311 s |
+
+
+## Rezultatų aptarimas
+
+Iš pateiktų benchmark rezultatų matyti, kad:
+- **`std::vector`** išlieka labai stiprus bendro našumo požiūriu dėl greito nuskaitymo ir rūšiavimo.
+- **`std::list`** skirstymo fazėje gali būti labai greitas, tačiau bendrą laiką stipriai padidina rūšiavimo kaštas.
+- **`std::deque`** dažniausiai yra tarpinis variantas tarp `vector` ir `list`.
+- 1 strategija dažniausiai yra lėčiausia dėl duomenų dubliavimo į du naujus konteinerius.
+- 2 ir 3 strategijos naudoja mažiau papildomos atminties ir dažniausiai veikia greičiau.
+- Šiame benchmark rinkinyje 3 strategija kai kuriais atvejais pagerina 2 strategijos rezultatą, tačiau bendras laimėtojas priklauso nuo konkretaus konteinerio ir duomenų kiekio.
+
+## Ekrano nuotraukos
+
+Programos paleidimas:
+![Programos paleidimas](screenshots/V1.0_startup.png)
+
+`std::vector` benchmark:
+![Vector benchmark](screenshots/V1.0_benchmark_vector.png)
+![Vector benchmark overview](screenshots/V1.0_benchmark_vector_over.png)
+
+`std::list` benchmark:
+![List benchmark](screenshots/V1.0_benchmark_list.png)
+![List benchmark overview](screenshots/V1.0_benchmark_list_over.png)
+
+`std::deque` benchmark:
+![Deque benchmark](screenshots/V1.0_benchmark_deque.png)
+![Deque benchmark overview](screenshots/v1.0_benchmark_deque_over.png)
+
+## v0.4 ir v1.0 skirtumai
+
+### v0.4
+- viena realizacija su `std::vector`
+- duomenų skaitymas, skirstymas, rūšiavimas ir išvedimas į failus
+- matuojamas bendras programos veikimo laikas
+
+### v1.0
+- tas pats kodas kompiliuojamas su `std::vector`, `std::list` ir `std::deque`
+- pridėtas atskiras benchmark režimas pagal užduoties reikalavimus
+- realizuotos 3 skirstymo strategijos
+- rezultatai eksportuojami į CSV, todėl juos lengva pridėti į GitHub ir panaudoti README analizėje
+
+## Naudojimo instrukcija
+
+1. Sukompiliuoti projektą su `make`.
+2. Paleisti vieną iš vykdomųjų failų: `./vector`, `./list` arba `./deque`.
+3. Jei reikia, sugeneruoti testinius failus.
+4. Paleisti benchmark režimą.
+5. Surinkti CSV rezultatus.
+6. Įkelti README, CSV ir ekrano nuotraukas į GitHub repozitoriją.
