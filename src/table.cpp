@@ -8,21 +8,31 @@
 #include <sstream>
 #include <string>
 
-static std::string fmt2(double x) {
+namespace {
+
+std::string fmt2(double x) {
     std::ostringstream oss;
     oss << std::fixed << std::setprecision(2) << x;
     return oss.str();
 }
 
-static Cols computeCols(std::size_t maxVCols, std::size_t maxPCols, std::size_t surnameExtraGapCols) {
-    const std::string hV  = "Vardas";
-    const std::string hP  = "Pavardė";
+Cols computeCols(const StudentContainer& students, std::size_t surnameExtraGapCols) {
+    const std::string hV = "Vardas";
+    const std::string hP = "Pavardė";
     const std::string hG1 = "Galutinis vidurkis";
     const std::string hG2 = "Galutinė mediana";
 
+    std::size_t maxVCols = utf8::displayWidth(hV);
+    std::size_t maxPCols = utf8::displayWidth(hP);
+
+    for (const auto& s : students) {
+        maxVCols = std::max(maxVCols, utf8::displayWidth(s.vardas));
+        maxPCols = std::max(maxPCols, utf8::displayWidth(s.pavarde));
+    }
+
     Cols c;
-    c.wV = std::max(maxVCols, utf8::displayWidth(hV)) + 2;
-    c.wP = std::max(maxPCols, utf8::displayWidth(hP)) + surnameExtraGapCols;
+    c.wV = maxVCols + 2;
+    c.wP = maxPCols + surnameExtraGapCols;
 
     const std::size_t hG = std::max(utf8::displayWidth(hG1), utf8::displayWidth(hG2));
     c.wG = std::max<std::size_t>(hG, 12) + 2;
@@ -30,7 +40,7 @@ static Cols computeCols(std::size_t maxVCols, std::size_t maxPCols, std::size_t 
     return c;
 }
 
-static void printHeader(std::ostream& out, const Cols& c) {
+void printHeader(std::ostream& out, const Cols& c) {
     utf8::printPaddedRight(out, "Vardas", c.wV);
     utf8::printPaddedRight(out, "Pavardė", c.wP);
     utf8::printPaddedRight(out, "Galutinis vidurkis", c.wG);
@@ -40,12 +50,12 @@ static void printHeader(std::ostream& out, const Cols& c) {
     out << std::string(c.wV + c.wP + c.wG + c.wG, '-') << '\n';
 }
 
+} // namespace
+
 void printTable(std::ostream& out,
-                const std::vector<StudentRec>& students,
-                std::size_t maxVCols,
-                std::size_t maxPCols,
+                const StudentContainer& students,
                 std::size_t surnameExtraGapCols) {
-    const Cols c = computeCols(maxVCols, maxPCols, surnameExtraGapCols);
+    const Cols c = computeCols(students, surnameExtraGapCols);
 
     printHeader(out, c);
 
