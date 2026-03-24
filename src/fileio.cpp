@@ -1,7 +1,6 @@
 #include "fileio.h"
 
 #include "grades.h"
-#include "utf8.h"
 
 #include <algorithm>
 #include <fstream>
@@ -10,33 +9,46 @@
 #include <string>
 #include <vector>
 
-// Tikimasi antraštės formato: Vardas Pavarde ND1 ND2 ... Egz
-static std::size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
-    std::istringstream iss(headerLine);
-    std::vector<std::string> tokens;
-    for (std::string t; iss >> t;) tokens.push_back(std::move(t));
+namespace {
 
-    if (tokens.size() < 4) {
-        throw std::runtime_error(
-            "Neteisinga antraštė: turi būti bent 4 stulpeliai (Vardas Pavarde ND.. Egz).");
+void validateGradeRange(int x, const std::string& what) {
+    if (x < 1 || x > 10) {
+        throw std::runtime_error("Neteisingas pažymys (" + std::to_string(x) + ") lauke: " + what +
+                                 ". Leistinas intervalas: 1..10.");
+    }
+}
+
+std::size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
+    std::istringstream hs(headerLine);
+    std::vector<std::string> tokens;
+    std::string tok;
+
+    while (hs >> tok) {
+        tokens.push_back(tok);
     }
 
-    // Vardas, Pavarde, ...ND..., Egz
+    if (tokens.size() < 3) {
+        throw std::runtime_error("Neteisinga failo antraštė: per mažai stulpelių.");
+    }
+
+    if (tokens.front() != "Vardas" || tokens[1] != "Pavardė") {
+        throw std::runtime_error("Neteisinga failo antraštė: pirmi stulpeliai turi būti 'Vardas Pavardė'.");
+    }
+
+    if (tokens.back() != "Egz") {
+        throw std::runtime_error("Neteisinga failo antraštė: paskutinis stulpelis turi būti 'Egz'.");
+    }
+
     return tokens.size() - 3;
 }
 
-static void validateGradeRange(int g, const std::string& where) {
-    if (g < 0 || g > 10) {
-        throw std::runtime_error("Neteisingas pažymys (" + where + "): " + std::to_string(g) +
-                                 ". Leidžiama [0..10].");
-    }
-}
+} // namespace
 
-void readStudentsFromFileVec(const std::string& filename,
-                             std::vector<StudentRec>& out,
-                             std::size_t& maxVCols,
-                             std::size_t& maxPCols,
-                             const Weights& weights) {
+void readStudentsFromFile(const std::string& filename,
+                          StudentContainer& out,
+                          const Weights& weights) {
+    out.clear();
+
     std::ifstream in(filename);
     if (!in) {
         throw std::runtime_error("Nepavyko atidaryti failo (ar jis egzistuoja?): " + filename);
@@ -52,8 +64,9 @@ void readStudentsFromFileVec(const std::string& filename,
     std::vector<int> nd(ndCount);
     std::vector<int> tmp(ndCount);
 
-    std::string v, p;
-    std::size_t lineNo = 1; // antraštė
+    std::string v;
+    std::string p;
+    std::size_t lineNo = 1;
 
     while (in >> v >> p) {
         ++lineNo;
@@ -88,8 +101,6 @@ void readStudentsFromFileVec(const std::string& filename,
         s.galVid = grade::calcFinal(avg, egz, weights);
         s.galMed = grade::calcFinal(med, egz, weights);
 
-        maxVCols = std::max(maxVCols, utf8::displayWidth(s.vardas));
-        maxPCols = std::max(maxPCols, utf8::displayWidth(s.pavarde));
         out.push_back(std::move(s));
     }
 
