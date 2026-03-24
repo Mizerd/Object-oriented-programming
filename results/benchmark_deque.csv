@@ -1,0 +1,13 @@
+sep=;
+container;filename;repeats;sort_key;strategy;total;strong;weak;read_s;sort_s;split_s;total_s
+std::deque;studentai1000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);1000;585;415;0.001030;0.000246;0.000026;0.001302
+std::deque;studentai1000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);1000;585;415;0.000590;0.000138;0.000010;0.000738
+std::deque;studentai1000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);1000;585;415;0.000476;0.000111;0.000007;0.000595
+std::deque;studentai10000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);10000;5836;4164;0.004978;0.001791;0.000230;0.007000
+std::deque;studentai10000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);10000;5836;4164;0.004958;0.001800;0.000145;0.006903
+std::deque;studentai10000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);10000;5836;4164;0.004833;0.001789;0.000133;0.006755
+std::deque;studentai100000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);100000;58717;41283;0.052827;0.023276;0.003232;0.079334
+std::deque;studentai100000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);100000;58717;41283;0.053262;0.024488;0.002046;0.079797
+std::deque;studentai100000.txt;20;galutinis_vidurkis;3 strategija (vienas naujas konteineris + remove_if + move);100000;58717;41283;0.051457;0.024090;0.001815;0.077361
+std::deque;studentai1000000.txt;20;galutinis_vidurkis;1 strategija (du nauji konteineriai);1000000;586985;413015;0.552710;0.302839;0.029224;0.884773
+std::deque;studentai1000000.txt;20;galutinis_vidurkis;2 strategija (vienas naujas konteineris + remove_if + copy);1000000;586985;413015;0.513031;0.293076;0.020410;0.826518

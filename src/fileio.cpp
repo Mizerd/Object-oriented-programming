@@ -1,7 +1,6 @@
 #include "fileio.h"
 
 #include "grades.h"
-#include "utf8.h"
 
 #include <algorithm>
 #include <fstream>
@@ -10,33 +9,66 @@
 #include <string>
 #include <vector>
 
-// Tikimasi antraštės formato: Vardas Pavarde ND1 ND2 ... Egz
-static std::size_t detectNdCountFromHeaderLine(const std::string& headerLine) {
-    std::istringstream iss(headerLine);
-    std::vector<std::string> tokens;
-    for (std::string t; iss >> t;) tokens.push_back(std::move(t));
+namespace {
 
-    if (tokens.size() < 4) {
+void validateGradeRange(int x, const std::string& what) {
+    if (x < 1 || x > 10) {
         throw std::runtime_error(
-            "Neteisinga antraštė: turi būti bent 4 stulpeliai (Vardas Pavarde ND.. Egz).");
+            "Neteisingas pazymys (" + std::to_string(x) + ") lauke: " + what +
+            ". Leistinas intervalas: 1..10.");
+    }
+}
+
+std::string stripUtf8Bom(const std::string& s) {
+    if (s.size() >= 3 &&
+        static_cast<unsigned char>(s[0]) == 0xEF &&
+        static_cast<unsigned char>(s[1]) == 0xBB &&
+        static_cast<unsigned char>(s[2]) == 0xBF) {
+        return s.substr(3);
+    }
+    return s;
+}
+
+bool isAcceptedSurnameHeader(const std::string& token) {
+    return token == "Pavarde" || token == "Pavardė";
+}
+
+std::size_t detectNdCountFromHeaderLine(const std::string& rawHeaderLine) {
+    const std::string headerLine = stripUtf8Bom(rawHeaderLine);
+
+    std::istringstream hs(headerLine);
+    std::vector<std::string> tokens;
+    std::string tok;
+
+    while (hs >> tok) {
+        tokens.push_back(tok);
     }
 
-    // Vardas, Pavarde, ...ND..., Egz
+    if (tokens.size() < 3) {
+        throw std::runtime_error("Neteisinga failo antraste: per mazai stulpeliu.");
+    }
+
+    if (tokens.front() != "Vardas" || !isAcceptedSurnameHeader(tokens[1])) {
+        throw std::runtime_error(
+            "Neteisinga failo antraste: pirmi stulpeliai turi buti "
+            "'Vardas Pavarde' arba 'Vardas Pavardė'.");
+    }
+
+    if (tokens.back() != "Egz") {
+        throw std::runtime_error(
+            "Neteisinga failo antraste: paskutinis stulpelis turi buti 'Egz'.");
+    }
+
     return tokens.size() - 3;
 }
 
-static void validateGradeRange(int g, const std::string& where) {
-    if (g < 0 || g > 10) {
-        throw std::runtime_error("Neteisingas pažymys (" + where + "): " + std::to_string(g) +
-                                 ". Leidžiama [0..10].");
-    }
-}
+} // namespace
 
-void readStudentsFromFileVec(const std::string& filename,
-                             std::vector<StudentRec>& out,
-                             std::size_t& maxVCols,
-                             std::size_t& maxPCols,
-                             const Weights& weights) {
+void readStudentsFromFile(const std::string& filename,
+                          StudentContainer& out,
+                          const Weights& weights) {
+    out.clear();
+
     std::ifstream in(filename);
     if (!in) {
         throw std::runtime_error("Nepavyko atidaryti failo (ar jis egzistuoja?): " + filename);
@@ -44,7 +76,7 @@ void readStudentsFromFileVec(const std::string& filename,
 
     std::string headerLine;
     if (!std::getline(in, headerLine)) {
-        throw std::runtime_error("Failas tuščias arba nepavyko nuskaityti antraštės: " + filename);
+        throw std::runtime_error("Failas tuscias arba nepavyko nuskaityti antrastes: " + filename);
     }
 
     const std::size_t ndCount = detectNdCountFromHeaderLine(headerLine);
@@ -52,8 +84,9 @@ void readStudentsFromFileVec(const std::string& filename,
     std::vector<int> nd(ndCount);
     std::vector<int> tmp(ndCount);
 
-    std::string v, p;
-    std::size_t lineNo = 1; // antraštė
+    std::string v;
+    std::string p;
+    std::size_t lineNo = 1;
 
     while (in >> v >> p) {
         ++lineNo;
@@ -62,22 +95,27 @@ void readStudentsFromFileVec(const std::string& filename,
         for (std::size_t i = 0; i < ndCount; ++i) {
             int g;
             if (!(in >> g)) {
-                throw std::runtime_error("Neteisingas failo formatas: trūksta ND reikšmių eilutėje " +
-                                         std::to_string(lineNo) + ".");
+                throw std::runtime_error(
+                    "Neteisingas failo formatas: truksta ND reiksmiu eiluteje " +
+                    std::to_string(lineNo) + ".");
             }
-            validateGradeRange(g, "ND, eilutė " + std::to_string(lineNo));
+            validateGradeRange(g, "ND, eilute " + std::to_string(lineNo));
             nd[i] = g;
             sum += g;
         }
 
         int egz;
         if (!(in >> egz)) {
-            throw std::runtime_error("Neteisingas failo formatas: trūksta egzamino pažymio eilutėje " +
-                                     std::to_string(lineNo) + ".");
+            throw std::runtime_error(
+                "Neteisingas failo formatas: truksta egzamino pazymio eiluteje " +
+                std::to_string(lineNo) + ".");
         }
-        validateGradeRange(egz, "egzaminas, eilutė " + std::to_string(lineNo));
+        validateGradeRange(egz, "egzaminas, eilute " + std::to_string(lineNo));
 
-        const double avg = ndCount ? (static_cast<double>(sum) / static_cast<double>(ndCount)) : 0.0;
+        const double avg = ndCount
+            ? (static_cast<double>(sum) / static_cast<double>(ndCount))
+            : 0.0;
+
         tmp = nd;
         std::sort(tmp.begin(), tmp.end());
         const double med = grade::medianFromSorted(tmp);
@@ -88,12 +126,11 @@ void readStudentsFromFileVec(const std::string& filename,
         s.galVid = grade::calcFinal(avg, egz, weights);
         s.galMed = grade::calcFinal(med, egz, weights);
 
-        maxVCols = std::max(maxVCols, utf8::displayWidth(s.vardas));
-        maxPCols = std::max(maxPCols, utf8::displayWidth(s.pavarde));
         out.push_back(std::move(s));
     }
 
     if (out.empty()) {
-        throw std::runtime_error("Faile nerasta studentų įrašų (gal neteisingas formatas?): " + filename);
+        throw std::runtime_error(
+            "Faile nerasta studentu irasu (gal neteisingas formatas?): " + filename);
     }
 }

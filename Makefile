@@ -1,5 +1,6 @@
 CXX := g++
-CXXFLAGS := -std=c++17 -O3 -g -Wall -Wextra -pedantic -march=native
+
+COMMON_FLAGS := -std=c++17 -O3 -g -Wall -Wextra -pedantic -march=native
 INCLUDES := -Iinclude
 
 SRC := \
@@ -11,14 +12,27 @@ SRC := \
 	src/sorting.cpp \
 	src/table.cpp \
 	src/menu.cpp \
-	src/fileGenerator.cpp
+	src/fileGenerator.cpp \
+	src/splitting.cpp \
+	src/benchmark.cpp
 
-TARGET := vector
+TARGETS := vector list deque
 
-all: $(TARGET)
+all: $(TARGETS)
 
-$(TARGET): $(SRC)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $(TARGET)
+vector: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_VECTOR
+vector: $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
+
+list: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_LIST
+list: $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
+
+deque: CXXFLAGS := $(COMMON_FLAGS) -DSTUDENT_CONTAINER_DEQUE
+deque: $(SRC)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) $(SRC) -o $@
 
 clean:
-	rm -f $(TARGET)
+	rm -f $(TARGETS) benchmark_*.csv kietiakai.txt vargsiukai.txt
+
+.PHONY: all clean
