@@ -11,11 +11,11 @@ const char* splitStrategyLabel(SplitStrategy strategy) {
         case SplitStrategy::Strategy1:
             return "1 strategija (du nauji konteineriai)";
         case SplitStrategy::Strategy2:
-            return "2 strategija (vienas naujas + trynimai)";
+            return "2 strategija (vienas naujas konteineris + pasalinimas is bendro)";
         case SplitStrategy::Strategy3:
             return "3 strategija (stable_partition)";
     }
-    return "nežinoma strategija";
+    return "nezinoma strategija";
 }
 
 void splitStudentsStrategy1(const StudentContainer& students,
@@ -41,14 +41,18 @@ void splitStudentsStrategy2(StudentContainer& students,
     weak.clear();
     reserveIfSupported(weak, students.size());
 
-    for (auto it = students.begin(); it != students.end();) {
-        if (isWeakStudent(*it)) {
-            weak.push_back(*it);
-            it = students.erase(it);
-        } else {
-            ++it;
-        }
-    }
+    auto newEnd = std::remove_if(
+        students.begin(),
+        students.end(),
+        [&](const StudentRec& s) {
+            if (isWeakStudent(s)) {
+                weak.push_back(s);
+                return true;
+            }
+            return false;
+        });
+
+    students.erase(newEnd, students.end());
 }
 
 void splitStudentsStrategy3(StudentContainer& students,
@@ -57,7 +61,8 @@ void splitStudentsStrategy3(StudentContainer& students,
     reserveIfSupported(weak, students.size());
 
     auto boundary = std::stable_partition(
-        students.begin(), students.end(),
+        students.begin(),
+        students.end(),
         [](const StudentRec& s) { return !isWeakStudent(s); });
 
     weak.insert(weak.end(), boundary, students.end());
