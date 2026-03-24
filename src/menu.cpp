@@ -3,7 +3,6 @@
 #include "constants.h"
 #include "grades.h"
 #include "input.h"
-#include "utf8.h"
 
 #include <chrono>
 #include <iostream>
@@ -11,12 +10,14 @@
 #include <string>
 #include <vector>
 
-static int rndGrade(std::mt19937& rng) {
+namespace {
+
+int rndGrade(std::mt19937& rng) {
     std::uniform_int_distribution<int> dist(1, 10);
     return dist(rng);
 }
 
-static void readHomeworkInteractive(std::vector<int>& nd) {
+void readHomeworkInteractive(std::vector<int>& nd) {
     nd.clear();
     nd.reserve(cfg::kMaxNdPerStudent);
 
@@ -39,9 +40,22 @@ static void readHomeworkInteractive(std::vector<int>& nd) {
     }
 }
 
-void menuV01Style(std::vector<StudentRec>& students,
-                  std::size_t& maxVCols,
-                  std::size_t& maxPCols,
+StudentRec buildStudent(const std::string& v,
+                        const std::string& p,
+                        const std::vector<int>& nd,
+                        int egz,
+                        const Weights& weights) {
+    StudentRec s;
+    s.vardas = v;
+    s.pavarde = p;
+    s.galVid = grade::calcFinal(grade::average(nd), egz, weights);
+    s.galMed = grade::calcFinal(grade::median(nd), egz, weights);
+    return s;
+}
+
+} // namespace
+
+void menuV01Style(StudentContainer& students,
                   const Weights& weights) {
     std::mt19937 rng(static_cast<unsigned>(
         std::chrono::high_resolution_clock::now().time_since_epoch().count()));
@@ -67,16 +81,7 @@ void menuV01Style(std::vector<StudentRec>& students,
 
                 readHomeworkInteractive(nd);
                 const int egz = inp::readIntInRange("Egzamino pažymys (1..10): ", 1, 10);
-
-                StudentRec s;
-                s.vardas = std::move(v);
-                s.pavarde = std::move(p);
-                s.galVid = grade::calcFinal(grade::average(nd), egz, weights);
-                s.galMed = grade::calcFinal(grade::median(nd), egz, weights);
-
-                maxVCols = std::max(maxVCols, utf8::displayWidth(s.vardas));
-                maxPCols = std::max(maxPCols, utf8::displayWidth(s.pavarde));
-                students.push_back(std::move(s));
+                students.push_back(buildStudent(v, p, nd, egz, weights));
             }
 
         } else if (choice == 2) {
@@ -94,16 +99,7 @@ void menuV01Style(std::vector<StudentRec>& students,
                 nd.clear();
                 for (int i = 0; i < k; ++i) nd.push_back(rndGrade(rng));
                 const int egz = rndGrade(rng);
-
-                StudentRec s;
-                s.vardas = std::move(v);
-                s.pavarde = std::move(p);
-                s.galVid = grade::calcFinal(grade::average(nd), egz, weights);
-                s.galMed = grade::calcFinal(grade::median(nd), egz, weights);
-
-                maxVCols = std::max(maxVCols, utf8::displayWidth(s.vardas));
-                maxPCols = std::max(maxPCols, utf8::displayWidth(s.pavarde));
-                students.push_back(std::move(s));
+                students.push_back(buildStudent(v, p, nd, egz, weights));
             }
 
         } else if (choice == 3) {
@@ -113,7 +109,7 @@ void menuV01Style(std::vector<StudentRec>& students,
             const int k = inp::readIntInRange(
                 "Kiek ND generuoti kiekvienam studentui? (1..1000): ", 1, cfg::kMaxNdPerStudent);
 
-            students.reserve(students.size() + static_cast<std::size_t>(genM));
+            reserveIfSupported(students, students.size() + static_cast<std::size_t>(genM));
 
             static const std::vector<std::string> maleNames = {
                 "Arvydas","Rimas","Mantas","Lukas","Tomas","Paulius","Jonas","Darius"};
@@ -136,26 +132,21 @@ void menuV01Style(std::vector<StudentRec>& students,
             nd.reserve(static_cast<std::size_t>(k));
 
             for (int i = 0; i < genM; ++i) {
-                StudentRec s;
                 const bool isFemale = pickFemale(rng);
+                std::string v;
+                std::string p;
                 if (isFemale) {
-                    s.vardas = femaleNames[dFemaleName(rng)];
-                    s.pavarde = femaleSurnames[dFemaleSur(rng)];
+                    v = femaleNames[dFemaleName(rng)];
+                    p = femaleSurnames[dFemaleSur(rng)];
                 } else {
-                    s.vardas = maleNames[dMaleName(rng)];
-                    s.pavarde = maleSurnames[dMaleSur(rng)];
+                    v = maleNames[dMaleName(rng)];
+                    p = maleSurnames[dMaleSur(rng)];
                 }
 
                 nd.clear();
                 for (int j = 0; j < k; ++j) nd.push_back(rndGrade(rng));
                 const int egz = rndGrade(rng);
-
-                s.galVid = grade::calcFinal(grade::average(nd), egz, weights);
-                s.galMed = grade::calcFinal(grade::median(nd), egz, weights);
-
-                maxVCols = std::max(maxVCols, utf8::displayWidth(s.vardas));
-                maxPCols = std::max(maxPCols, utf8::displayWidth(s.pavarde));
-                students.push_back(std::move(s));
+                students.push_back(buildStudent(v, p, nd, egz, weights));
             }
         }
     }
